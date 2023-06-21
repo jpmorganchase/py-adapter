@@ -21,9 +21,6 @@ except ImportError:  # pragma: no cover
     # Python < 3.8
     import importlib_metadata as metadata  # type: ignore
 
-__all__ = [
-    # TODO
-]
 
 #: Library version, e.g. 1.0.0, taken from Git tags
 __version__ = metadata.version("py-adapter")
