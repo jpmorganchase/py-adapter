@@ -32,39 +32,46 @@ def test_package_has_version():
 
 
 @pytest.fixture(scope="session")
-def ship_schema():
+def ship_class():
     from conftest import Ship
 
-    return avro.schema.parse(pas.generate(Ship, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS))
+    return Ship
 
 
 @pytest.fixture(scope="session")
-def person_schema():
+def person_class():
     from conftest import Person
 
-    return avro.schema.parse(pas.generate(Person))
+    return Person
 
 
 @pytest.fixture(scope="session")
-def port_schema():
+def port_class():
     from conftest import Port
 
-    return avro.schema.parse(pas.generate(Port))
+    return Port
 
 
 @pytest.fixture(scope="session")
-def ship_adapter(ship_schema):
-    return py_adapter._ObjectAdapter(ship_schema)
+def ship_schema(ship_class):
+    return avro.schema.parse(
+        pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
+    )
 
 
 @pytest.fixture(scope="session")
-def person_adapter(person_schema):
-    return py_adapter._ObjectAdapter(person_schema)
+def ship_adapter(ship_class):
+    return py_adapter._ObjectAdapter.for_py_type(ship_class)
 
 
 @pytest.fixture(scope="session")
-def port_adapter(port_schema):
-    return py_adapter._ObjectAdapter(port_schema)
+def person_adapter(person_class):
+    return py_adapter._ObjectAdapter.for_py_type(person_class)
+
+
+@pytest.fixture(scope="session")
+def port_adapter(port_class):
+    return py_adapter._ObjectAdapter.for_py_type(port_class)
 
 
 def test_serde_with_avro(ship_schema, ship_obj):
@@ -119,9 +126,9 @@ def test_serde_with_json(ship_schema, ship_obj):
     assert not hasattr(parsed_obj.crew[1], "role")
 
 
-def test_serde_dict_only(ship_schema, ship_obj):
+def test_serde_dict_only(ship_class, ship_obj):
     ship_dict = py_adapter.to_basic_type(ship_obj)
-    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_schema)
+    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_class)
     assert adapted_ship_obj == ship_obj
 
 
@@ -172,20 +179,20 @@ def test_to_basic_type_obj_excl_private_fields():
     assert adapted_ship_dict.get("sails") is None
 
 
-def test_from_basic_type(ship_obj, ship_dict, ship_schema):
-    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_schema)
+def test_from_basic_type(ship_obj, ship_dict, ship_class):
+    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_class)
     assert adapted_ship_obj == ship_obj
 
 
-def test_from_basic_type_bad_json_string(ship_obj, ship_dict, ship_schema):
+def test_from_basic_type_bad_json_string(ship_obj, ship_dict, ship_class):
     ship_dict["sails"] = "{{not valid json}}"
-    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_schema)
+    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_class)
     assert adapted_ship_obj.sails is None
 
 
-def test_from_basic_type_empty_json_string(ship_obj, ship_dict, ship_schema):
+def test_from_basic_type_empty_json_string(ship_obj, ship_dict, ship_class):
     ship_dict["sails"] = ""
-    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_schema)
+    adapted_ship_obj = py_adapter.from_basic_type(ship_dict, ship_class)
     assert adapted_ship_obj.sails is None
 
 
@@ -439,17 +446,15 @@ def test_datetime_no_conversion():
 def test_datetime_int():
     departure_time = datetime.datetime(1970, 1, 1, 0, 1, 0, tzinfo=datetime.timezone.utc)
     expected_serialization = 60 * 1_000  # Using milliseconds
-    schema = avro.schema.make_avsc_object({"type": "long", "logicalType": "timestamp-millis"})
     assert py_adapter.to_basic_type(departure_time, datetime_type=int) == expected_serialization
-    assert py_adapter.from_basic_type(expected_serialization, schema) == departure_time
+    assert py_adapter.from_basic_type(expected_serialization, datetime.datetime) == departure_time
 
 
 def test_datetime_str():
     departure_time = datetime.datetime(1970, 1, 1, 0, 1, 0, tzinfo=datetime.timezone.utc)
     expected_serialization = "1970-01-01T00:01:00+00:00"
-    schema = avro.schema.make_avsc_object({"type": "long", "logicalType": "timestamp-millis"})
     assert py_adapter.to_basic_type(departure_time, datetime_type=str) == "1970-01-01T00:01:00+00:00"
-    assert py_adapter.from_basic_type(expected_serialization, schema) == departure_time
+    assert py_adapter.from_basic_type(expected_serialization, datetime.datetime) == departure_time
 
 
 def test_date_no_conversion():
@@ -460,27 +465,23 @@ def test_date_no_conversion():
 def test_date_int():
     departure_time = datetime.date(1970, 1, 2)
     expected_serialization = 24 * 60 * 60 * 1_000  # Using milliseconds
-    schema = avro.schema.make_avsc_object({"type": "int", "logicalType": "date"})
     assert py_adapter.to_basic_type(departure_time, datetime_type=int) == expected_serialization
-    assert py_adapter.from_basic_type(expected_serialization, schema) == departure_time
+    assert py_adapter.from_basic_type(expected_serialization, datetime.date) == departure_time
 
 
 def test_date_str():
     departure_time = datetime.date(1970, 1, 2)
     expected_serialization = "1970-01-02"
-    schema = avro.schema.make_avsc_object({"type": "int", "logicalType": "date"})
     assert py_adapter.to_basic_type(departure_time, datetime_type=str) == expected_serialization
-    assert py_adapter.from_basic_type(expected_serialization, schema) == departure_time
+    assert py_adapter.from_basic_type(expected_serialization, datetime.date) == departure_time
 
 
 def test_uuid():
     id = uuid.UUID(int=1)
     expected_serialization = "00000000-0000-0000-0000-000000000001"
-    schema = avro.schema.make_avsc_object({"type": "string", "logicalType": "uuid"})
     assert py_adapter.to_basic_type(id) == expected_serialization
-    assert py_adapter.from_basic_type(expected_serialization, schema) == id
+    assert py_adapter.from_basic_type(expected_serialization, uuid.UUID) == id
 
 
 def test_uuid_from_empty_string():
-    schema = avro.schema.make_avsc_object({"type": "string", "logicalType": "uuid"})
-    assert py_adapter.from_basic_type("", schema) is None
+    assert py_adapter.from_basic_type("", uuid.UUID) is None
