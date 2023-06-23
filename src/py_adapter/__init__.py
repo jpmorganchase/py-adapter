@@ -72,8 +72,6 @@ def to_basic_type(obj: Any, /, *, datetime_type: Type = datetime.datetime, json_
     return data_dict
 
 
-# TODO: replace schema argument with py_type argument
-# TODO: returned object to be instance of py_type
 Obj = TypeVar("Obj")
 
 
