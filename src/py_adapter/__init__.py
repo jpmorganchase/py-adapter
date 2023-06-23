@@ -44,17 +44,16 @@ __version__ = metadata.version("py-adapter")
 
 logger = logging.getLogger(__package__)
 
-# TODO: replace with Avro-agnostic names
-# Avro serializable data types
-AvroPrimitives = Union[None, bool, str, int, float]
-AvroLogicals = Union[datetime.datetime, datetime.date]
-AvroRecord = Dict[str, Any]  # Recursive definition not possible yet
-AvroArray = List[Any]  # Recursive definition not possible yet
-AvroData = Union[AvroPrimitives, AvroLogicals, AvroArray, AvroRecord]
+# Elementary serializable data types
+Primitives = Union[None, bool, str, int, float]
+Logicals = Union[datetime.datetime, datetime.date]
+Record = Dict[str, Any]  # Recursive definition not possible yet
+Array = List[Any]  # Recursive definition not possible yet
+Basic = Union[Primitives, Logicals, Array, Record]
 
 
 # TODO: support datetime as nanosecond integer
-def to_basic_type(obj: Any, datetime_type: Type = datetime.datetime, json_type: Type = str) -> AvroData:
+def to_basic_type(obj: Any, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
     """
     Convert an object into a (nested) dictionary suitable for Avro serialization
 
@@ -73,14 +72,15 @@ def to_basic_type(obj: Any, datetime_type: Type = datetime.datetime, json_type: 
 
 
 # TODO: replace schema argument with py_type argument
-def from_basic_type(data_dict: AvroData, schema: avro.schema.Schema) -> Any:
+# TODO: returned object to be instance of py_type
+def from_basic_type(data_dict: Basic, schema: avro.schema.Schema) -> Any:
     """
     Convert a dictionary data structure into a Python object using an Avro schema
 
     Use :class:`ObjectAdapter` directly to work with unparsed (JSON-formatted) schema files.
 
     :param data_dict: Any valid data structure that can be parsed using the schema
-    :param schema: The Avro schema
+    :param schema:    The Avro schema
     """
     adapter = _ObjectAdapter(schema)
     obj = adapter.adapt(data_dict)
@@ -119,7 +119,7 @@ class _DictAdapter(_Adapter):
         self.datetime_type = datetime_type
         self.json_type = json_type
 
-    def adapt(self, data: Any) -> AvroData:
+    def adapt(self, data: Any) -> Basic:
         """
         Convert an object into a (nested) dictionary
 
@@ -158,7 +158,7 @@ class _DictAdapter(_Adapter):
             except TypeError:
                 return copy.deepcopy(data)
 
-    def _adapt_date(self, data: datetime.date) -> Union[AvroPrimitives, AvroLogicals]:
+    def _adapt_date(self, data: datetime.date) -> Union[Primitives, Logicals]:
         """Convert a date object"""
         if self.datetime_type == int:
             start_of_day = datetime.datetime.combine(data, datetime.time(), tzinfo=datetime.timezone.utc)
@@ -168,7 +168,7 @@ class _DictAdapter(_Adapter):
         else:
             return copy.deepcopy(data)
 
-    def _adapt_datetime(self, data: datetime.datetime) -> Union[AvroPrimitives, AvroLogicals]:
+    def _adapt_datetime(self, data: datetime.datetime) -> Union[Primitives, Logicals]:
         """Convert a datetime object"""
         if self.datetime_type == int:
             return int(data.timestamp() * 1e3)  # Hardcode to timestamp in milliseconds for now
@@ -177,12 +177,12 @@ class _DictAdapter(_Adapter):
         else:
             return copy.deepcopy(data)
 
-    def _adapt_dataclass(self, data: Any) -> AvroRecord:
+    def _adapt_dataclass(self, data: Any) -> Record:
         """Recursively convert a dataclass object with all fields"""
         result = []
         for f in dataclasses.fields(data):
             # Additional logic
-            value: AvroData
+            value: Basic
             field_meta = f.metadata.get(__package__)  # Retrieve dataclass field meta data relevant to current pkg
             if field_meta and field_meta.get("logical_type", "") == "json" and self.json_type == str:
                 # If this is a Python dict field with logical type JSON, encode data as JSON
@@ -212,7 +212,7 @@ class _ObjectAdapter(_Adapter):
         """
         self.schema = schema
 
-    def adapt(self, data: AvroData) -> Any:
+    def adapt(self, data: Basic) -> Any:
         """
         Parse a data structure and return a Python object
 
@@ -220,7 +220,7 @@ class _ObjectAdapter(_Adapter):
         """
         return self._parse(data, self.schema)
 
-    def _parse(self, data: AvroData, schema: avro.schema.Schema) -> Any:
+    def _parse(self, data: Basic, schema: avro.schema.Schema) -> Any:
         """Main parser method, called recursively"""
         parsers_by_schema: Dict[Type[avro.schema.Schema], Callable[[Any, avro.schema.Schema], Any]] = {
             avro.schema.ArraySchema: self._parse_array,
@@ -238,7 +238,7 @@ class _ObjectAdapter(_Adapter):
         else:
             return data
 
-    def _parse_primitive(self, data: AvroPrimitives, schema: avro.schema.PrimitiveSchema) -> Any:
+    def _parse_primitive(self, data: Primitives, schema: avro.schema.PrimitiveSchema) -> Any:
         """
         Parse primitive data types
 
@@ -306,12 +306,12 @@ class _ObjectAdapter(_Adapter):
             # Deserialization to datetime object handled by Avro deserializer
             return data
 
-    def _parse_array(self, data: AvroArray, schema: avro.schema.ArraySchema) -> List[Any]:
+    def _parse_array(self, data: Array, schema: avro.schema.ArraySchema) -> List[Any]:
         """Parse an array/list schema"""
         data = [self._parse(elem, schema.items) for elem in data]
         return data
 
-    def _parse_union(self, data: AvroData, schema: avro.schema.UnionSchema) -> Any:
+    def _parse_union(self, data: Basic, schema: avro.schema.UnionSchema) -> Any:
         """Parse a union schema trying the union branches one by one until the data fits"""
 
         # Rank the branch schemas by best matching then by position in the union
@@ -341,7 +341,7 @@ class _ObjectAdapter(_Adapter):
         else:  # TODO: remove this logic once we do proper writer vs reader schema resolution
             return None
 
-    def _parse_record(self, data: AvroRecord, schema: avro.schema.RecordSchema) -> Any:
+    def _parse_record(self, data: Record, schema: avro.schema.RecordSchema) -> Any:
         """
         Parse a record/object schema
 
@@ -371,18 +371,18 @@ class _ObjectAdapter(_Adapter):
         return obj
 
     @staticmethod
-    def _obj_using_init(data_class: Type, kwargs: Dict[str, AvroData]) -> Any:
+    def _obj_using_init(data_class: Type, kwargs: Dict[str, Basic]) -> Any:
         """Create an object by passing all fields into the constructor method"""
         obj = data_class(**kwargs)
         return obj
 
-    def _obj_set_attrs(self, data_class: Type, kwargs: Dict[str, AvroData]) -> Any:
+    def _obj_set_attrs(self, data_class: Type, kwargs: Dict[str, Basic]) -> Any:
         """Create an object by setting all fields directly after object instantiation"""
         obj = data_class()
         self._set_obj_fields(obj, kwargs)
         return obj
 
-    def _obj_init_first(self, data_class: Type, kwargs: Dict[str, AvroData]) -> Any:
+    def _obj_init_first(self, data_class: Type, kwargs: Dict[str, Basic]) -> Any:
         """
         Create an object by inspecting the constructor signature and passing all available parameters and setting other
         fields afterwards
