@@ -10,7 +10,7 @@
 # specific language governing permissions and limitations under the License.
 
 """
-Round-trip serialization/deserialization of any Python object to/from any serialization format.
+Round-trip serialization/deserialization of any Python object to/from any serialization format including Avro and JSON.
 """
 
 import abc

@@ -1,7 +1,7 @@
 py-adapter
 ==========
 
-Round-trip serialization/deserialization of any Python object to/from any serialization format.
+Round-trip serialization/deserialization of any Python object to/from any serialization format including Avro and JSON.
 
 .. toctree::
    :maxdepth: 2
