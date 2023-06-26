@@ -54,7 +54,7 @@ Basic = Union[Primitives, Logicals, Array, Record]
 
 
 # TODO: support datetime as nanosecond integer
-def to_basic_type(obj: Any, /, *, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
+def to_basic_type(obj: Any, *, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
     """
     Convert an object into a data structure using "basic" types, suitable for serialization
 
