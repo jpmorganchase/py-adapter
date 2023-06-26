@@ -20,7 +20,7 @@ dynamic = ["version"]
 authors = [
     { name = "J.P. Morgan Chase & Co.", email = "open_source@jpmorgan.com" }
 ]
-description = "Round-trip serialization/deserialization of any Python object to/from any serialization format."
+description = "Round-trip serialization/deserialization of any Python object to/from any serialization format including Avro and JSON."
 readme = "README.md"
 license = { file = "LICENSE" }
 classifiers = [
@@ -44,8 +44,12 @@ keywords = [
 requires-python = ">=3.7"
 # All runtime dependencies that must be packaged, pin major version only.
 dependencies = [
+    "avro~=1.11",
     "importlib-metadata<4; python_version<'3.8'",
-    "py-avro-schema~=2.0",
+    "memoization~=0.4",
+    "orjson~=3.0",
+    "py-avro-schema~=2.1",
+    "python-dateutil~=2.8",
 ]
 
 
@@ -117,5 +121,6 @@ profile = "black"
 [[tool.mypy.overrides]]
 
 module = [
+    "avro.*",
 ]
 ignore_missing_imports = true

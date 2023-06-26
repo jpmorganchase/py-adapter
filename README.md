@@ -1,6 +1,6 @@
 # py-adapter
 
-Round-trip serialization/deserialization of any Python object to/from any serialization format.
+Round-trip serialization/deserialization of any Python object to/from any serialization format including Avro and JSON.
 
 :blue_book: Documentation: https://py-adapter.readthedocs.io
 
