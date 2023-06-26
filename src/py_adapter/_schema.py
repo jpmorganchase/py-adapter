@@ -22,8 +22,8 @@ from decimal import Decimal
 from struct import Struct
 from typing import Any
 
+import avro.constants
 import avro.schema
-from avro import constants
 
 _DEBUG_VALIDATE = False
 _debug_validate_indent = 0
@@ -113,28 +113,29 @@ _match = {
     ),
     "bytes": lambda schema, datum: float(
         (isinstance(datum, bytes))
-        or (isinstance(datum, Decimal) and getattr(schema, "logical_type", None) == constants.DECIMAL)
+        or (isinstance(datum, Decimal) and getattr(schema, "logical_type", None) == avro.constants.DECIMAL)
     ),
     "int": lambda schema, datum: float(
         ((isinstance(datum, int)))
         # Modified here as we serialize dates as timestamps in milliseconds
         and (LONG_MIN_VALUE <= datum <= LONG_MAX_VALUE)
-        or (isinstance(datum, datetime.date) and getattr(schema, "logical_type", None) == constants.DATE)
-        or (isinstance(datum, datetime.time) and getattr(schema, "logical_type", None) == constants.TIME_MILLIS)
+        or (isinstance(datum, datetime.date) and getattr(schema, "logical_type", None) == avro.constants.DATE)
+        or (isinstance(datum, datetime.time) and getattr(schema, "logical_type", None) == avro.constants.TIME_MILLIS)
     ),
     "long": lambda schema, datum: float(
         (isinstance(datum, int))
         and (LONG_MIN_VALUE <= datum <= LONG_MAX_VALUE)
-        or (isinstance(datum, datetime.time) and getattr(schema, "logical_type", None) == constants.TIME_MICROS)
+        or (isinstance(datum, datetime.time) and getattr(schema, "logical_type", None) == avro.constants.TIME_MICROS)
         or (
-            (isinstance(datum, datetime.date) and _is_timezone_aware_datetime(datum) or isinstance(datum, str))
-            and getattr(schema, "logical_type", None) in (constants.TIMESTAMP_MILLIS, constants.TIMESTAMP_MICROS)
+            (isinstance(datum, datetime.datetime) and _is_timezone_aware_datetime(datum) or isinstance(datum, str))
+            and getattr(schema, "logical_type", None)
+            in (avro.constants.TIMESTAMP_MILLIS, avro.constants.TIMESTAMP_MICROS)
         )
     ),
     "float": lambda schema, datum: float(isinstance(datum, (int, float))),
     "fixed": lambda schema, datum: float(
         (isinstance(datum, bytes) and len(datum) == schema.size)
-        or (isinstance(datum, Decimal) and getattr(schema, "logical_type", None) == constants.DECIMAL)
+        or (isinstance(datum, Decimal) and getattr(schema, "logical_type", None) == avro.constants.DECIMAL)
     ),
     "enum": lambda schema, datum: float(datum in schema.symbols),
     "array": lambda schema, datum: float(isinstance(datum, list) and all(match(schema.items, item) for item in datum)),
