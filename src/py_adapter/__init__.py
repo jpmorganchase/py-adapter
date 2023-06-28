@@ -48,8 +48,8 @@ logger = logging.getLogger(__package__)
 # Elementary serializable data types
 Primitives = Union[None, bool, str, int, float]
 Logicals = Union[datetime.datetime, datetime.date]
-Record = Dict[str, Any]  # Recursive definition not possible yet
-Array = List[Any]  # Recursive definition not possible yet
+Record = Dict[str, "Basic"]
+Array = List["Basic"]
 Basic = Union[Primitives, Logicals, Array, Record]
 
 
