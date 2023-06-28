@@ -32,27 +32,6 @@ def test_package_has_version():
 
 
 @pytest.fixture(scope="session")
-def ship_class():
-    from conftest import Ship
-
-    return Ship
-
-
-@pytest.fixture(scope="session")
-def person_class():
-    from conftest import Person
-
-    return Person
-
-
-@pytest.fixture(scope="session")
-def port_class():
-    from conftest import Port
-
-    return Port
-
-
-@pytest.fixture(scope="session")
 def ship_schema(ship_class):
     return avro.schema.parse(
         pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
