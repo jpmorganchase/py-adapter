@@ -56,7 +56,7 @@ Basic = Union[Primitives, Logicals, Array, Record]
 # TODO: support datetime as nanosecond integer
 def to_basic_type(obj: Any, *, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
     """
-    Convert an object into a data structure using "basic" types, suitable for serialization
+    Convert an object into a data structure using "basic" types only as a pre-serialization step.
 
     :param obj:           The object to convert
     :param datetime_type: The type to convert datetime objects to. Supported types include :class:`int` (timestamp),
@@ -77,7 +77,7 @@ Obj = TypeVar("Obj")
 
 def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     """
-    Convert a data structure with "basic" types into a Python object using an Avro schema
+    Convert a data structure with "basic" types only into a Python object of a given type
 
     :param basic_obj: Any valid data structure that can be used to create an instance of ``py_type``
     :param py_type:   The Python class to create an instance from
