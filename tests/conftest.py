@@ -88,6 +88,21 @@ class Port:
         self.longitude = longitude
 
 
+@pytest.fixture(scope="session")
+def ship_class():
+    return Ship
+
+
+@pytest.fixture(scope="session")
+def person_class():
+    return Person
+
+
+@pytest.fixture(scope="session")
+def port_class():
+    return Port
+
+
 @pytest.fixture
 def ship_obj():
     crew = [

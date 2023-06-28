@@ -22,12 +22,13 @@ import importlib
 import inspect
 import logging
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 import avro.schema
 import dateutil.parser
 import memoization
 import orjson
+import py_avro_schema as pas
 
 import py_adapter._schema
 
@@ -53,7 +54,7 @@ Basic = Union[Primitives, Logicals, Array, Record]
 
 
 # TODO: support datetime as nanosecond integer
-def to_basic_type(obj: Any, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
+def to_basic_type(obj: Any, *, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
     """
     Convert an object into a data structure using "basic" types, suitable for serialization
 
@@ -71,16 +72,17 @@ def to_basic_type(obj: Any, datetime_type: Type = datetime.datetime, json_type: 
     return data_dict
 
 
-# TODO: replace schema argument with py_type argument
-# TODO: returned object to be instance of py_type
-def from_basic_type(basic_obj: Basic, schema: avro.schema.Schema) -> Any:
+Obj = TypeVar("Obj")
+
+
+def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     """
     Convert a data structure with "basic" types into a Python object using an Avro schema
 
-    :param basic_obj: Any valid data structure that can be parsed using the schema
-    :param schema:    The Avro schema
+    :param basic_obj: Any valid data structure that can be used to create an instance of ``py_type``
+    :param py_type:   The Python class to create an instance from
     """
-    adapter = _ObjectAdapter(schema)
+    adapter = _ObjectAdapter.for_py_type(py_type)
     obj = adapter.adapt(basic_obj)
     return obj
 
@@ -209,6 +211,19 @@ class _ObjectAdapter(_Adapter):
         :param schema: The Avro schema to be used to adapt the data structure.
         """
         self.schema = schema
+
+    @classmethod
+    def for_py_type(cls, py_type: Type) -> "_ObjectAdapter":
+        """
+        An adapter to convert a dict into a Python object of a given class
+
+        :param py_type: The Python class to return an object adapter for
+        """
+        # TODO: expose options as necessary
+        schema = avro.schema.parse(
+            pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
+        )
+        return cls(schema)
 
     def adapt(self, data: Basic) -> Any:
         """
