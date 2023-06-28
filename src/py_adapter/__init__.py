@@ -219,10 +219,13 @@ class _ObjectAdapter(_Adapter):
 
         :param py_type: The Python class to return an object adapter for
         """
-        # TODO: expose options as necessary
-        schema = avro.schema.parse(
-            pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
-        )
+        try:
+            # TODO: expose options as necessary
+            schema = avro.schema.parse(
+                pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
+            )
+        except TypeError:
+            raise TypeError(f"{py_type} not supported by py-adapter since it is not supported by py-avro-schema")
         return cls(schema)
 
     def adapt(self, data: Basic) -> Any:

@@ -14,6 +14,7 @@ import datetime
 import io
 import json
 import pathlib
+import re
 import uuid
 
 import avro.datafile
@@ -464,3 +465,21 @@ def test_uuid():
 
 def test_uuid_from_empty_string():
     assert py_adapter.from_basic_type("", uuid.UUID) is None
+
+
+def test_unsupported_type():
+    class Sail:
+        def __init__(self, name):  # untyped __init__ arguments not supported
+            self.name = name
+
+    sail = Sail(name="spinnaker")
+    expected_serialization = {"name": "spinnaker"}
+    assert py_adapter.to_basic_type(sail) == expected_serialization  # This works
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "<class 'test_py_adapter.test_unsupported_type.<locals>.Sail'> not supported by py-adapter since it is not "
+            "supported by py-avro-schema"
+        ),
+    ):
+        py_adapter.from_basic_type(expected_serialization, Sail)  # This does not work
