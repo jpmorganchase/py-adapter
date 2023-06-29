@@ -48,15 +48,15 @@ logger = logging.getLogger(__package__)
 # Elementary serializable data types
 Primitives = Union[None, bool, str, int, float]
 Logicals = Union[datetime.datetime, datetime.date]
-Record = Dict[str, Any]  # Recursive definition not possible yet
-Array = List[Any]  # Recursive definition not possible yet
+Record = Dict[str, "Basic"]
+Array = List["Basic"]
 Basic = Union[Primitives, Logicals, Array, Record]
 
 
 # TODO: support datetime as nanosecond integer
 def to_basic_type(obj: Any, *, datetime_type: Type = datetime.datetime, json_type: Type = str) -> Basic:
     """
-    Convert an object into a data structure using "basic" types, suitable for serialization
+    Convert an object into a data structure using "basic" types only as a pre-serialization step.
 
     :param obj:           The object to convert
     :param datetime_type: The type to convert datetime objects to. Supported types include :class:`int` (timestamp),
@@ -77,7 +77,7 @@ Obj = TypeVar("Obj")
 
 def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     """
-    Convert a data structure with "basic" types into a Python object using an Avro schema
+    Convert a data structure with "basic" types only into a Python object of a given type
 
     :param basic_obj: Any valid data structure that can be used to create an instance of ``py_type``
     :param py_type:   The Python class to create an instance from
@@ -219,10 +219,13 @@ class _ObjectAdapter(_Adapter):
 
         :param py_type: The Python class to return an object adapter for
         """
-        # TODO: expose options as necessary
-        schema = avro.schema.parse(
-            pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
-        )
+        try:
+            # TODO: expose options as necessary
+            schema = avro.schema.parse(
+                pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
+            )
+        except TypeError:
+            raise TypeError(f"{py_type} not supported by py-adapter since it is not supported by py-avro-schema")
         return cls(schema)
 
     def adapt(self, data: Basic) -> Any:
