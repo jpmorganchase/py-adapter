@@ -31,6 +31,7 @@ import orjson
 import py_avro_schema as pas
 
 import py_adapter._schema
+import py_adapter.plugin
 
 try:
     from importlib import metadata
@@ -85,6 +86,19 @@ def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     adapter = _ObjectAdapter.for_py_type(py_type)
     obj = adapter.adapt(basic_obj)
     return obj
+
+
+def serialize(obj: Any, *, format: str) -> bytes:
+    """
+    Serialize an object using a serialization format supported by **py-adapter**
+
+    :param obj:    Python object to serialize
+    :param format: Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    """
+    hook = py_adapter.plugin.plugin_hook(format, "serialize")
+    basic_obj = to_basic_type(obj)
+    data = hook(obj=basic_obj)
+    return data
 
 
 class _Adapter(abc.ABC):

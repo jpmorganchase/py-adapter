@@ -12,25 +12,11 @@ def tsst_invalid_format(ship_obj):
 
 def test_serialize_json(ship_obj, ship_class):
     data = py_adapter.serialize(ship_obj, format="JSON")
-    expected_serialization = b"""{
-        "cargo": {
-            "description": "Barrels of rum",
-            "weight_kg": 5100.5
-        },
-        "crew": [
-            {"name": "Florenz"},
-            {"name": "Cara"}
-        ],
-        "departed_at": "2022-10-28T13:30:00.000Z",
-        "build_on": "1970-12-31",
-        "engine": null,
-        "id": "00000000-0000-0000-0000-000000000001",
-        "name": "Elvira",
-        "type": "SAILING_VESSEL",
-        "sails": {"main":{"type":"dacron"},"jib":"white"},
-        "tags": ["keelboat"]
-    }""".replace(
-        b" ", b""
+    expected_serialization = (
+        b'{"name":"Elvira","id":"00000000-0000-0000-0000-000000000001","type":"SAILING_VESSEL","crew":[{"name":'
+        b'"Florenz"},{"name":"Cara"}],"cargo":{"description":"Barrels of rum","weight_kg":5100.5},"departed_at":'
+        b'"2020-10-28T13:30:00+00:00","build_on":"1970-12-31","engine":null,"sails":'
+        b'"{\\"main\\":{\\"type\\":\\"dacron\\"},\\"jib\\":\\"white\\"}","tags":["keelboat"]}'
     )
     assert data == expected_serialization
     obj_out = py_adapter.deserialize(data, ship_class, format="JSON")  # possibly auto-detect format
@@ -38,7 +24,7 @@ def test_serialize_json(ship_obj, ship_class):
 
 
 def test_serialize_avro(ship_obj, ship_class):
-    data = py_adapter.serialize(ship_obj, "Avro")
+    data = py_adapter.serialize(ship_obj, format="Avro")
     obj_out = py_adapter.deserialize(data, "Avro", ship_class)
     assert obj_out == ship_obj
 

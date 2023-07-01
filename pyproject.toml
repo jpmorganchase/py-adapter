@@ -48,6 +48,7 @@ dependencies = [
     "importlib-metadata<4; python_version<'3.8'",
     "memoization~=0.4",
     "orjson~=3.0",
+    "pluggy~=1.2",
     "py-avro-schema~=2.1",
     "python-dateutil~=2.8",
 ]
@@ -94,6 +95,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 # Section required to populate package version from Git tag
 
+[tool.pytest.ini_options]
+log_level = "DEBUG"
+log_cli = true
 
 [tool.interrogate]
 
