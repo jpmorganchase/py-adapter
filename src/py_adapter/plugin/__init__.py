@@ -4,7 +4,7 @@
 import functools
 import logging
 import sys
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pluggy
 
