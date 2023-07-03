@@ -95,10 +95,24 @@ def serialize(obj: Any, *, format: str) -> bytes:
     :param obj:    Python object to serialize
     :param format: Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
     """
-    hook = py_adapter.plugin.plugin_hook(format, "serialize")
+    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
-    data = hook(obj=basic_obj)
+    data = serialize_fn(obj=basic_obj)
     return data
+
+
+def deserialize(data: bytes, py_type: Type[Obj], *, format: str) -> Obj:
+    """
+    Deserialize bytes as a Python object of a given type from a serialization format supported by **py-adapter**
+
+    :param data:    Serialized data
+    :param py_type: The Python class to create an instance from
+    :param format:  Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    """
+    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
+    basic_obj = deserialize_fn(data=data)
+    obj = from_basic_type(basic_obj, py_type)
+    return obj
 
 
 class _Adapter(abc.ABC):

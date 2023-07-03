@@ -25,7 +25,7 @@ def test_serialize_json(ship_obj, ship_class):
 
 def test_serialize_avro(ship_obj, ship_class):
     data = py_adapter.serialize(ship_obj, format="Avro")
-    obj_out = py_adapter.deserialize(data, "Avro", ship_class)
+    obj_out = py_adapter.deserialize(data, ship_class, format="Avro")
     assert obj_out == ship_obj
 
 

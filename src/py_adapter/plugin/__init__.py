@@ -64,3 +64,8 @@ def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
 @hookspec(firstresult=True)
 def serialize(obj: "py_adapter.Basic") -> bytes:
     raise NotImplementedError()
+
+
+@hookspec(firstresult=True)
+def deserialize(data: bytes) -> "py_adapter.Basic":
+    raise NotImplementedError()
