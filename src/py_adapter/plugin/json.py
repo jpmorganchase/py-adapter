@@ -31,11 +31,12 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
 
 
 @py_adapter.plugin.hook
-def deserialize(data: bytes) -> py_adapter.Basic:
+def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize JSON bytes as an object of basic Python types
 
-    :param data: JSON bytes to deserialize
+    :param data:          JSON bytes to deserialize
+    :param writer_schema: Schema used to serialize the data with. Not used with JSON serialization.
     """
     import orjson
 

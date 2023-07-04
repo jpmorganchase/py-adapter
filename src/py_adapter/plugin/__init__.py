@@ -85,10 +85,11 @@ def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
 
 
 @hookspec(firstresult=True)
-def deserialize(data: bytes) -> "py_adapter.Basic":
+def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
 
-    :param data: Bytes to deserialize
+    :param data:          Bytes to deserialize
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()

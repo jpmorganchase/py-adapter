@@ -38,7 +38,7 @@ def test_serialize_json(ship_obj, ship_class):
 def test_serialize_avro(ship_obj, ship_class):
     writer_schema = pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS)
     data = py_adapter.serialize(ship_obj, format="Avro", writer_schema=writer_schema)
-    obj_out = py_adapter.deserialize(data, ship_class, format="Avro")
+    obj_out = py_adapter.deserialize(data, ship_class, format="Avro", writer_schema=writer_schema)
     assert obj_out == ship_obj
 
 

@@ -92,8 +92,9 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     """
     Serialize an object using a serialization format supported by **py-adapter**
 
-    :param obj:    Python object to serialize
-    :param format: Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param obj:           Python object to serialize
+    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
@@ -101,16 +102,17 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     return data
 
 
-def deserialize(data: bytes, py_type: Type[Obj], *, format: str) -> Obj:
+def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
     """
     Deserialize bytes as a Python object of a given type from a serialization format supported by **py-adapter**
 
-    :param data:    Serialized data
-    :param py_type: The Python class to create an instance from
-    :param format:  Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param data:          Serialized data
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
-    basic_obj = deserialize_fn(data=data)
+    basic_obj = deserialize_fn(data=data, writer_schema=writer_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
 
@@ -176,6 +178,7 @@ class _DictAdapter(_Adapter):
         elif isinstance(data, str):
             return str(data)  # Additional logic, it might be a string subclass
         elif isinstance(data, uuid.UUID):  # Additional logic
+            # TODO: introduce setting for UUID to str conversion, some serializer can work with UUID objects directly
             return str(data)
         else:
             try:
@@ -303,11 +306,15 @@ class _ObjectAdapter(_Adapter):
                 return class_(data)  # Instantiate class, which must be a subclass of str
         return data  # Avro serializer handles the rest
 
-    def _parse_uuid(self, data: str, schema: avro.schema.UUIDSchema) -> Union[None, uuid.UUID]:
+    def _parse_uuid(self, data: Union[str, uuid.UUID], schema: avro.schema.UUIDSchema) -> Union[None, uuid.UUID]:
         """
         Parse a UUID string as a Python UUID object
         """
-        if data:
+        # TODO: introduce UUID to str conversion setting so we know whether the deserializer for a given format can
+        # handle UUID objects itself.
+        if isinstance(data, uuid.UUID):
+            return data
+        elif data:
             return uuid.UUID(data)
         else:
             # Accept an empty string and return None such that the Python class can initialize a value. Any

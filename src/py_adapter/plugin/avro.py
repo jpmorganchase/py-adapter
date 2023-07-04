@@ -31,11 +31,31 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
     """
     import fastavro.write
 
-    data = io.BytesIO()
+    data_stream = io.BytesIO()
     # TODO: generate schema if not provided
     schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
-    fastavro.write.schemaless_writer(data, schema=schema_obj, record=obj)
-    data.flush()
-    data.seek(0)
-    d = data.read()
-    return d
+    # TODO: add support for writer which embeds the schema
+    fastavro.write.schemaless_writer(data_stream, schema=schema_obj, record=obj)
+    data_stream.flush()
+    data_stream.seek(0)
+    data = data_stream.read()
+    return data
+
+
+@py_adapter.plugin.hook
+def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
+    """
+    Deserialize Avro bytes as an object of basic Python types
+
+    :param data:          Avro bytes to deserialize
+    :param writer_schema: Avro schema used to serialize the data with, as JSON bytes.
+    """
+    import fastavro.read
+
+    # TODO: generate writer schema if not provided
+    writer_schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
+    data_stream = io.BytesIO(data)
+    # TODO: add support for reader schema, if provided
+    # TODO: add support for reader of data with embedded (writer) schema
+    basic_obj = fastavro.read.schemaless_reader(data_stream, writer_schema=writer_schema_obj)
+    return basic_obj
