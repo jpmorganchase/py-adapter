@@ -1,6 +1,18 @@
-"""
+# Copyright 2023 J.P. Morgan Chase & Co.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
 
 """
+Plugin logic including plugin manager and hook specifications
+"""
+
 import functools
 import logging
 import sys
@@ -62,10 +74,21 @@ def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
 
 
 @hookspec(firstresult=True)
-def serialize(obj: "py_adapter.Basic") -> bytes:
+def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
+    """
+    Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
+
+    :param obj:           Python object to serialize
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
     raise NotImplementedError()
 
 
 @hookspec(firstresult=True)
 def deserialize(data: bytes) -> "py_adapter.Basic":
+    """
+    Hook specification. Deserialize data as an object of basic Python types
+
+    :param data: Bytes to deserialize
+    """
     raise NotImplementedError()

@@ -88,7 +88,7 @@ def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     return obj
 
 
-def serialize(obj: Any, *, format: str) -> bytes:
+def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     """
     Serialize an object using a serialization format supported by **py-adapter**
 
@@ -97,7 +97,7 @@ def serialize(obj: Any, *, format: str) -> bytes:
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
-    data = serialize_fn(obj=basic_obj)
+    data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
     return data
 
 

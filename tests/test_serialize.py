@@ -1,5 +1,17 @@
+# Copyright 2023 J.P. Morgan Chase & Co.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+
 import io
 
+import py_avro_schema as pas
 import pytest
 
 import py_adapter
@@ -24,7 +36,8 @@ def test_serialize_json(ship_obj, ship_class):
 
 
 def test_serialize_avro(ship_obj, ship_class):
-    data = py_adapter.serialize(ship_obj, format="Avro")
+    writer_schema = pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS)
+    data = py_adapter.serialize(ship_obj, format="Avro", writer_schema=writer_schema)
     obj_out = py_adapter.deserialize(data, ship_class, format="Avro")
     assert obj_out == ship_obj
 
