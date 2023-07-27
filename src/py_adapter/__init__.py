@@ -22,7 +22,7 @@ import importlib
 import inspect
 import logging
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import avro.schema
 import dateutil.parser
@@ -269,7 +269,8 @@ class _ObjectAdapter(_Adapter):
 
     def _parse(self, data: Basic, schema: avro.schema.Schema) -> Any:
         """Main parser method, called recursively"""
-        parsers_by_schema: Dict[Type[avro.schema.Schema], Callable[[Any, avro.schema.Schema], Any]] = {
+        # TODO: improve type hints, second callable argument must be a schema object
+        parsers_by_schema: Dict[Type[avro.schema.Schema], Callable[[Any, Any], Any]] = {
             avro.schema.ArraySchema: self._parse_array,
             avro.schema.EnumSchema: self._parse_enum,
             avro.schema.UnionSchema: self._parse_union,
@@ -302,7 +303,8 @@ class _ObjectAdapter(_Adapter):
                     return None
             elif schema.get_prop(self.named_string_attribute):
                 # We want this to fail if named_string class is not importable
-                class_ = self._import_attribute(schema.get_prop(self.named_string_attribute))
+                dotted_name = cast(str, schema.get_prop(self.named_string_attribute))
+                class_ = self._import_attribute(dotted_name)
                 return class_(data)  # Instantiate class, which must be a subclass of str
         return data  # Avro serializer handles the rest
 
@@ -468,7 +470,7 @@ class _ObjectAdapter(_Adapter):
         This is relevant only for record and enum schemas. Python object is imported from a package taken from the
         schema's namespace or, optionally, from an schema attribute like ``pyModule``.
         """
-        module_name = schema.props.get(self.module_schema_attribute, schema.namespace)
+        module_name = cast(str, schema.props.get(self.module_schema_attribute, schema.namespace))
         try:
             return getattr(importlib.import_module(module_name), schema.name)
         except AttributeError:  # TODO: remove this logic once we do proper writer vs reader schema resolution

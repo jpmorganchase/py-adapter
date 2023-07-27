@@ -45,6 +45,7 @@ requires-python = ">=3.7"
 # All runtime dependencies that must be packaged, pin major version only.
 dependencies = [
     "avro~=1.11",
+    "fastavro~=1.8",  # TODO: consider moving Avro-related dependencies to optional dependencies
     "importlib-metadata<4; python_version<'3.8'",
     "memoization~=0.4",
     "orjson~=3.0",
