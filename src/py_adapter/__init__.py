@@ -255,7 +255,7 @@ class _ObjectAdapter(_Adapter):
             schema = avro.schema.parse(
                 pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS).decode("utf-8")
             )
-        except TypeError:
+        except pas.TypeNotSupportedError:
             raise TypeError(f"{py_type} not supported by py-adapter since it is not supported by py-avro-schema")
         return cls(schema)
 

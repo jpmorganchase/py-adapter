@@ -50,7 +50,7 @@ dependencies = [
     "memoization~=0.4",
     "orjson~=3.0",
     "pluggy~=1.2",
-    "py-avro-schema~=2.1",
+    "py-avro-schema~=2.2",
     "python-dateutil~=2.8",
 ]
 
