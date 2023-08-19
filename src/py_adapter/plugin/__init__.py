@@ -81,12 +81,17 @@ class InvalidFormat(ValueError):
     def __init__(self, plugin_name: str, hook_name: str):
         """Initialize error with custom message"""
         pm = manager()
-        plugins_for_hook = sorted(impl.plugin_name for impl in getattr(pm.hook, hook_name).get_hookimpls())
-        msg = (
-            f"A plugin for serialization format '{plugin_name}' is not available. Installed plugins/formats are: "
-            f"{plugins_for_hook}."
-        )
-        # TODO: change msg if the format is installed, but the specific hook has not been implemented.
+        if not pm.get_plugin(plugin_name):
+            plugins_for_hook = sorted(impl.plugin_name for impl in getattr(pm.hook, hook_name).get_hookimpls())
+            msg = (
+                f"A plugin for serialization format '{plugin_name}' is not available. Installed plugins/formats are: "
+                f"{plugins_for_hook}."
+            )
+        else:
+            msg = (
+                f"The plugin for serialization format '{plugin_name}' does not implement the required hook "
+                f"'{hook_name}'."
+            )
         super().__init__(msg)
 
 

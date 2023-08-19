@@ -30,6 +30,21 @@ def test_invalid_format(ship_obj):
         py_adapter.serialize(ship_obj, format="does not exist")
 
 
+def test_plugin_without_hooks(ship_obj):
+    class PluginNoHooks:
+        """A plugin which does not implement required hooks"""
+
+    pm = py_adapter.plugin.manager()
+    pm.register(PluginNoHooks, "BrokenFormat")
+    with pytest.raises(
+        py_adapter.plugin.InvalidFormat,
+        match=re.escape(
+            "The plugin for serialization format 'BrokenFormat' does not implement the required hook 'serialize'."
+        ),
+    ):
+        py_adapter.serialize(ship_obj, format="BrokenFormat")
+
+
 def test_serialize_json(ship_obj, ship_class):
     data = py_adapter.serialize(ship_obj, format="JSON")
     expected_serialization = (
