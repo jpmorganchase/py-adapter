@@ -116,11 +116,17 @@ _match = {
         or (isinstance(datum, Decimal) and getattr(schema, "logical_type", None) == avro.constants.DECIMAL)
     ),
     "int": lambda schema, datum: float(
-        ((isinstance(datum, int)))
-        # Modified here as we serialize dates as timestamps in milliseconds
-        and (LONG_MIN_VALUE <= datum <= LONG_MAX_VALUE)
-        or (isinstance(datum, datetime.date) and getattr(schema, "logical_type", None) == avro.constants.DATE)
-        or (isinstance(datum, datetime.time) and getattr(schema, "logical_type", None) == avro.constants.TIME_MILLIS)
+        (isinstance(datum, int) and (LONG_MIN_VALUE <= datum <= LONG_MAX_VALUE))
+        or (
+            getattr(schema, "logical_type", None) == avro.constants.DATE
+            and (
+                isinstance(datum, datetime.date)  # Dates olready deserialized
+                or (
+                    isinstance(datum, str) and len(datum) == 10 and len(datum.split("-")) == 3
+                )  # Dates as ISO strings, 1970-12-31
+            )
+        )
+        or (getattr(schema, "logical_type", None) == avro.constants.TIME_MILLIS and isinstance(datum, datetime.time))
     ),
     "long": lambda schema, datum: float(
         (isinstance(datum, int))

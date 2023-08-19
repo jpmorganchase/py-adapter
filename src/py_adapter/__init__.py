@@ -22,7 +22,7 @@ import importlib
 import inspect
 import logging
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import avro.schema
 import dateutil.parser
@@ -31,6 +31,7 @@ import orjson
 import py_avro_schema as pas
 
 import py_adapter._schema
+import py_adapter.plugin
 
 try:
     from importlib import metadata
@@ -84,6 +85,35 @@ def from_basic_type(basic_obj: Basic, py_type: Type[Obj]) -> Obj:
     """
     adapter = _ObjectAdapter.for_py_type(py_type)
     obj = adapter.adapt(basic_obj)
+    return obj
+
+
+def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
+    """
+    Serialize an object using a serialization format supported by **py-adapter**
+
+    :param obj:           Python object to serialize
+    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
+    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
+    basic_obj = to_basic_type(obj)
+    data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
+    return data
+
+
+def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
+    """
+    Deserialize bytes as a Python object of a given type from a serialization format supported by **py-adapter**
+
+    :param data:          Serialized data
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
+    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
+    basic_obj = deserialize_fn(data=data, writer_schema=writer_schema)
+    obj = from_basic_type(basic_obj, py_type)
     return obj
 
 
@@ -148,6 +178,7 @@ class _DictAdapter(_Adapter):
         elif isinstance(data, str):
             return str(data)  # Additional logic, it might be a string subclass
         elif isinstance(data, uuid.UUID):  # Additional logic
+            # TODO: introduce setting for UUID to str conversion, some serializer can work with UUID objects directly
             return str(data)
         else:
             try:
@@ -238,7 +269,8 @@ class _ObjectAdapter(_Adapter):
 
     def _parse(self, data: Basic, schema: avro.schema.Schema) -> Any:
         """Main parser method, called recursively"""
-        parsers_by_schema: Dict[Type[avro.schema.Schema], Callable[[Any, avro.schema.Schema], Any]] = {
+        # TODO: improve type hints, second callable argument must be a schema object
+        parsers_by_schema: Dict[Type[avro.schema.Schema], Callable[[Any, Any], Any]] = {
             avro.schema.ArraySchema: self._parse_array,
             avro.schema.EnumSchema: self._parse_enum,
             avro.schema.UnionSchema: self._parse_union,
@@ -271,15 +303,20 @@ class _ObjectAdapter(_Adapter):
                     return None
             elif schema.get_prop(self.named_string_attribute):
                 # We want this to fail if named_string class is not importable
-                class_ = self._import_attribute(schema.get_prop(self.named_string_attribute))
+                dotted_name = cast(str, schema.get_prop(self.named_string_attribute))
+                class_ = self._import_attribute(dotted_name)
                 return class_(data)  # Instantiate class, which must be a subclass of str
         return data  # Avro serializer handles the rest
 
-    def _parse_uuid(self, data: str, schema: avro.schema.UUIDSchema) -> Union[None, uuid.UUID]:
+    def _parse_uuid(self, data: Union[str, uuid.UUID], schema: avro.schema.UUIDSchema) -> Union[None, uuid.UUID]:
         """
         Parse a UUID string as a Python UUID object
         """
-        if data:
+        # TODO: introduce UUID to str conversion setting so we know whether the deserializer for a given format can
+        # handle UUID objects itself.
+        if isinstance(data, uuid.UUID):
+            return data
+        elif data:
             return uuid.UUID(data)
         else:
             # Accept an empty string and return None such that the Python class can initialize a value. Any
@@ -433,7 +470,7 @@ class _ObjectAdapter(_Adapter):
         This is relevant only for record and enum schemas. Python object is imported from a package taken from the
         schema's namespace or, optionally, from an schema attribute like ``pyModule``.
         """
-        module_name = schema.props.get(self.module_schema_attribute, schema.namespace)
+        module_name = cast(str, schema.props.get(self.module_schema_attribute, schema.namespace))
         try:
             return getattr(importlib.import_module(module_name), schema.name)
         except AttributeError:  # TODO: remove this logic once we do proper writer vs reader schema resolution
