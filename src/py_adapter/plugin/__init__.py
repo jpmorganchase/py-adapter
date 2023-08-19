@@ -30,7 +30,7 @@ logger = logging.getLogger(__package__)
 #: Decorator for plugin hook functions
 hook = pluggy.HookimplMarker(__package__)
 #: Decorator for plugin hook function specifications/signatures
-hookspec = pluggy.HookspecMarker(__package__)
+_hookspec = pluggy.HookspecMarker(__package__)
 
 
 @functools.lru_cache(maxsize=None)
@@ -73,7 +73,7 @@ def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
     return hook_caller
 
 
-@hookspec(firstresult=True)
+@_hookspec(firstresult=True)
 def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
     """
     Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
@@ -84,7 +84,7 @@ def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
     raise NotImplementedError()
 
 
-@hookspec(firstresult=True)
+@_hookspec(firstresult=True)
 def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
