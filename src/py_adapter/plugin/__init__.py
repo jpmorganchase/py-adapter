@@ -40,24 +40,29 @@ def manager() -> pluggy.PluginManager:
 
     Plugins are automatically loaded through (setuptools) entrypoints, group ``inference_server``.
     """
-    from py_adapter.plugin import _avro, _json
-
     logger.debug("Initializing plugin manager for '%s'", __package__)
     manager_ = pluggy.PluginManager(__package__)
     manager_.add_hookspecs(sys.modules[__name__])
+
+    _load_default_plugins(manager_)
+
+    logger.debug("Discovering plugins using entrypoint group '%s'", __package__)
+    manager_.load_setuptools_entrypoints(group=__package__)
+    logger.debug("Loaded plugins: %s", manager_.get_plugins())
+    return manager_
+
+
+def _load_default_plugins(manager_: pluggy.PluginManager) -> None:
+    """Load plugins that are packaged with py-adapter"""
+    from py_adapter.plugin import _avro, _json
 
     default_plugins = {
         "Avro": _avro,
         "JSON": _json,
     }
     for name, plugin in default_plugins.items():
-        logger.debug("Loading default plugins '%s'", plugin)
+        logger.debug("Loading default plugin '%s'", plugin)
         manager_.register(plugin, name=name)
-
-    logger.debug("Discovering plugins using entrypoint group '%s'", __package__)
-    manager_.load_setuptools_entrypoints(group=__package__)
-    logger.debug("Loaded plugins: %s", manager_.get_plugins())
-    return manager_
 
 
 def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":

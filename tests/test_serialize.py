@@ -45,6 +45,20 @@ def test_plugin_without_hooks(ship_obj):
         py_adapter.serialize(ship_obj, format="BrokenFormat")
 
 
+def test_plugin_name_conflict(mocker):
+    def patched_load_default_plugins(manager_):
+        from py_adapter.plugin import _avro, _json
+
+        manager_.register(_avro, name="format1")
+        # Registering a plugin with conflicting name should fail
+        manager_.register(_json, name="format1")
+
+    mocker.patch("py_adapter.plugin._load_default_plugins", patched_load_default_plugins)
+    py_adapter.plugin.manager.cache_clear()
+    with pytest.raises(ValueError, match="Plugin name already registered: format1"):  # this is handled by Pluggy
+        py_adapter.plugin.manager()
+
+
 def test_serialize_json(ship_obj, ship_class):
     data = py_adapter.serialize(ship_obj, format="JSON")
     expected_serialization = (

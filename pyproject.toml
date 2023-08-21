@@ -72,6 +72,7 @@ docs = [
 testing = [
     "pytest",
     "pytest-cov",
+    "pytest-mock",
 ]
 linting = [
     "black",
