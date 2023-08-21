@@ -40,15 +40,15 @@ def manager() -> pluggy.PluginManager:
 
     Plugins are automatically loaded through (setuptools) entrypoints, group ``inference_server``.
     """
-    from py_adapter.plugin import avro, json
+    from py_adapter.plugin import _avro, _json
 
     logger.debug("Initializing plugin manager for '%s'", __package__)
     manager_ = pluggy.PluginManager(__package__)
     manager_.add_hookspecs(sys.modules[__name__])
 
     default_plugins = {
-        "Avro": avro,
-        "JSON": json,
+        "Avro": _avro,
+        "JSON": _json,
     }
     for name, plugin in default_plugins.items():
         logger.debug("Loading default plugins '%s'", plugin)
