@@ -39,6 +39,8 @@ extensions = [
 
 add_module_names = False
 
+autodoc_member_order = "bysource"
+
 autosectionlabel_prefix_document = True
 
 intersphinx_mapping = {

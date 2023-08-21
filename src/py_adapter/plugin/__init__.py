@@ -30,7 +30,7 @@ logger = logging.getLogger(__package__)
 #: Decorator for plugin hook functions
 hook = pluggy.HookimplMarker(__package__)
 #: Decorator for plugin hook function specifications/signatures
-hookspec = pluggy.HookspecMarker(__package__)
+_hookspec = pluggy.HookspecMarker(__package__)
 
 
 @functools.lru_cache(maxsize=None)
@@ -40,15 +40,15 @@ def manager() -> pluggy.PluginManager:
 
     Plugins are automatically loaded through (setuptools) entrypoints, group ``inference_server``.
     """
-    from py_adapter.plugin import avro, json
+    from py_adapter.plugin import _avro, _json
 
     logger.debug("Initializing plugin manager for '%s'", __package__)
     manager_ = pluggy.PluginManager(__package__)
     manager_.add_hookspecs(sys.modules[__name__])
 
     default_plugins = {
-        "Avro": avro,
-        "JSON": json,
+        "Avro": _avro,
+        "JSON": _json,
     }
     for name, plugin in default_plugins.items():
         logger.debug("Loading default plugins '%s'", plugin)
@@ -95,7 +95,7 @@ class InvalidFormat(ValueError):
         super().__init__(msg)
 
 
-@hookspec(firstresult=True)
+@_hookspec(firstresult=True)
 def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
     """
     Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
@@ -106,7 +106,7 @@ def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
     raise NotImplementedError()
 
 
-@hookspec(firstresult=True)
+@_hookspec(firstresult=True)
 def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
