@@ -70,7 +70,29 @@ def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
     pm = manager()
     all_plugins_except_this_one = (p for name, p in pm.list_name_plugin() if name != plugin_name)
     hook_caller = pm.subset_hook_caller(hook_name, remove_plugins=all_plugins_except_this_one)
+    if not hook_caller.get_hookimpls():
+        raise InvalidFormat(plugin_name=plugin_name, hook_name=hook_name)
     return hook_caller
+
+
+class InvalidFormat(ValueError):
+    """There is no plugin supporting the given format name"""
+
+    def __init__(self, plugin_name: str, hook_name: str):
+        """Initialize error with custom message"""
+        pm = manager()
+        if not pm.get_plugin(plugin_name):
+            plugins_for_hook = sorted(impl.plugin_name for impl in getattr(pm.hook, hook_name).get_hookimpls())
+            msg = (
+                f"A plugin for serialization format '{plugin_name}' is not available. Installed plugins/formats are: "
+                f"{plugins_for_hook}."
+            )
+        else:
+            msg = (
+                f"The plugin for serialization format '{plugin_name}' does not implement the required hook "
+                f"'{hook_name}'."
+            )
+        super().__init__(msg)
 
 
 @_hookspec(firstresult=True)
