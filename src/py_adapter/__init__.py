@@ -22,19 +22,8 @@ import importlib
 import inspect
 import logging
 import uuid
-from collections.abc import Iterator
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from collections.abc import Iterable, Iterator
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import avro.schema
 import dateutil.parser
@@ -114,7 +103,7 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     return data
 
 
-def serialize_many(objs: Sequence[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
+def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
     """
     Serialize multiple objects using a serialization format supported by **py-adapter**
 

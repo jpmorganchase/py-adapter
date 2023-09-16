@@ -16,8 +16,8 @@ Plugin logic including plugin manager and hook specifications
 import functools
 import logging
 import sys
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING
 
 import pluggy
 
@@ -113,7 +113,7 @@ def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
 
 
 @_hookspec(firstresult=True)
-def serialize_many(objs: Sequence["py_adapter.Basic"], writer_schema: bytes) -> bytes:
+def serialize_many(objs: Iterable["py_adapter.Basic"], writer_schema: bytes) -> bytes:
     """
     Hook specification. Serialize multiple Python objects of basic types to the format supported by the implementing
     plugin.

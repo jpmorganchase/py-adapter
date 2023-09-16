@@ -14,8 +14,7 @@ Avro serializer/deserializer **py-adapter** plugin
 """
 
 import io
-from collections.abc import Iterator
-from typing import Sequence
+from collections.abc import Iterable, Iterator
 
 import orjson
 
@@ -45,7 +44,7 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
 
 
 @py_adapter.plugin.hook
-def serialize_many(objs: Sequence[py_adapter.Basic], writer_schema: bytes) -> bytes:
+def serialize_many(objs: Iterable[py_adapter.Basic], writer_schema: bytes) -> bytes:
     """
     Serialize multiple Python objects of basic types as Avro container file format.
 
