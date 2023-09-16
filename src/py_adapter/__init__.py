@@ -142,6 +142,22 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     return obj
 
 
+def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> List[Obj]:
+    """
+    Deserialize bytes as a list of Python objects of a given type from a serialization format supported by
+    **py-adapter**
+
+    :param data:          Serialized data
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
+    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
+    basic_objs = deserialize_fn(data=data, writer_schema=writer_schema)
+    objs = [from_basic_type(basic_obj, py_type) for basic_obj in basic_objs]
+    return objs
+
+
 class _Adapter(abc.ABC):
     """Interface for an adapter"""
 
