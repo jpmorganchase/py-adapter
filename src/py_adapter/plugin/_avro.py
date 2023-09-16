@@ -14,7 +14,7 @@ Avro serializer/deserializer **py-adapter** plugin
 """
 
 import io
-from typing import Sequence
+from typing import List, Sequence
 
 import orjson
 
@@ -80,3 +80,20 @@ def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
     # TODO: add support for reader of data with embedded (writer) schema
     basic_obj = fastavro.read.schemaless_reader(data_stream, writer_schema=writer_schema_obj)
     return basic_obj
+
+
+@py_adapter.plugin.hook
+def deserialize_many(data: bytes, writer_schema: bytes) -> List[py_adapter.Basic]:
+    """
+    Deserialize Avro container file format data as a list of objects of basic Python types
+
+    :param data:          Bytes to deserialize
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
+    import fastavro.read
+
+    # TODO: make it fail if writer_schema is provided?
+    data_stream = io.BytesIO(data)
+    # TODO: add support for reader schema, if provided
+    basic_objs = list(fastavro.read.reader(data_stream, reader_schema=None))
+    return basic_objs

@@ -142,6 +142,7 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     return obj
 
 
+# TODO: return generator instead
 def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> List[Obj]:
     """
     Deserialize bytes as a list of Python objects of a given type from a serialization format supported by
