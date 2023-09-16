@@ -14,6 +14,7 @@ Avro serializer/deserializer **py-adapter** plugin
 """
 
 import io
+from typing import Sequence
 
 import orjson
 
@@ -36,6 +37,26 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
     schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
     # TODO: add support for writer which embeds the schema
     fastavro.write.schemaless_writer(data_stream, schema=schema_obj, record=obj)
+    data_stream.flush()
+    data_stream.seek(0)
+    data = data_stream.read()
+    return data
+
+
+@py_adapter.plugin.hook
+def serialize_many(objs: Sequence[py_adapter.Basic], writer_schema: bytes) -> bytes:
+    """
+    Serialize multiple Python objects of basic types as Avro container file format.
+
+    :param objs:          Python objects to serialize
+    :param writer_schema: Avro schema to serialize the data with, as JSON bytes.
+    """
+    import fastavro.write
+
+    data_stream = io.BytesIO()
+    # TODO: generate schema if not provided
+    schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
+    fastavro.write.writer(data_stream, schema=schema_obj, records=objs)
     data_stream.flush()
     data_stream.seek(0)
     data = data_stream.read()
