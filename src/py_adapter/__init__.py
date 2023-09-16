@@ -19,6 +19,7 @@ import dataclasses
 import datetime
 import enum
 import importlib
+import importlib.metadata
 import inspect
 import logging
 import uuid
@@ -34,15 +35,8 @@ import py_avro_schema as pas
 import py_adapter._schema
 import py_adapter.plugin
 
-try:
-    from importlib import metadata
-except ImportError:  # pragma: no cover
-    # Python < 3.8
-    import importlib_metadata as metadata  # type: ignore
-
-
 #: Library version, e.g. 1.0.0, taken from Git tags
-__version__ = metadata.version("py-adapter")
+__version__ = importlib.metadata.version("py-adapter")
 
 
 logger = logging.getLogger(__package__)
