@@ -16,7 +16,8 @@ Plugin logic including plugin manager and hook specifications
 import functools
 import logging
 import sys
-from typing import TYPE_CHECKING, List, Sequence
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Sequence
 
 import pluggy
 
@@ -135,9 +136,9 @@ def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
 
 
 @_hookspec(firstresult=True)
-def deserialize_many(data: bytes, writer_schema: bytes) -> List["py_adapter.Basic"]:
+def deserialize_many(data: bytes, writer_schema: bytes) -> Iterator["py_adapter.Basic"]:
     """
-    Hook specification. Deserialize data as a list of objects of basic Python types
+    Hook specification. Deserialize data as an iterator over objects of basic Python types
 
     :param data:          Bytes to deserialize
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.

@@ -22,6 +22,7 @@ import importlib
 import inspect
 import logging
 import uuid
+from collections.abc import Iterator
 from typing import (
     Any,
     Callable,
@@ -142,10 +143,9 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     return obj
 
 
-# TODO: return generator instead
-def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> List[Obj]:
+def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Iterator[Obj]:
     """
-    Deserialize bytes as a list of Python objects of a given type from a serialization format supported by
+    Deserialize bytes as an iterator over Python objects of a given type from a serialization format supported by
     **py-adapter**
 
     :param data:          Serialized data
@@ -155,7 +155,7 @@ def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_sch
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
     basic_objs = deserialize_fn(data=data, writer_schema=writer_schema)
-    objs = [from_basic_type(basic_obj, py_type) for basic_obj in basic_objs]
+    objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
     return objs
 
 
