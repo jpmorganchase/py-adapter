@@ -112,7 +112,7 @@ def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
-    basic_objs = [to_basic_type(obj) for obj in objs]
+    basic_objs = (to_basic_type(obj) for obj in objs)
     data = serialize_fn(objs=basic_objs, writer_schema=writer_schema)
     return data
 
