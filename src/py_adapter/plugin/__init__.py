@@ -16,7 +16,7 @@ Plugin logic including plugin manager and hook specifications
 import functools
 import logging
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 import pluggy
 
@@ -106,6 +106,18 @@ def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
     Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
 
     :param obj:           Python object to serialize
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
+    raise NotImplementedError()
+
+
+@_hookspec(firstresult=True)
+def serialize_many(objs: Sequence["py_adapter.Basic"], writer_schema: bytes) -> bytes:
+    """
+    Hook specification. Serialize multiple Python objects of basic types to the format supported by the implementing
+    plugin.
+
+    :param objs:          Python objects to serialize
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
