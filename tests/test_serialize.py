@@ -97,7 +97,6 @@ def test_serialize_stream_avro(ship_obj, ship_class):
     assert obj_out == ship_obj
 
 
-@pytest.mark.skip("TODO")
 def test_serialize_many_json(ship_obj, ship_class):
     ship_objs = [ship_obj, ship_obj]
     data = py_adapter.serialize_many(ship_objs, format="JSON")
