@@ -19,9 +19,11 @@ import dataclasses
 import datetime
 import enum
 import importlib
+import importlib.metadata
 import inspect
 import logging
 import uuid
+from collections.abc import Iterable, Iterator
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import avro.schema
@@ -33,15 +35,8 @@ import py_avro_schema as pas
 import py_adapter._schema
 import py_adapter.plugin
 
-try:
-    from importlib import metadata
-except ImportError:  # pragma: no cover
-    # Python < 3.8
-    import importlib_metadata as metadata  # type: ignore
-
-
 #: Library version, e.g. 1.0.0, taken from Git tags
-__version__ = metadata.version("py-adapter")
+__version__ = importlib.metadata.version("py-adapter")
 
 
 logger = logging.getLogger(__package__)
@@ -93,12 +88,26 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     Serialize an object using a serialization format supported by **py-adapter**
 
     :param obj:           Python object to serialize
-    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
     data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
+    return data
+
+
+def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
+    """
+    Serialize multiple objects using a serialization format supported by **py-adapter**
+
+    :param objs:          Python objects to serialize
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
+    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
+    basic_objs = (to_basic_type(obj) for obj in objs)
+    data = serialize_fn(objs=basic_objs, writer_schema=writer_schema)
     return data
 
 
@@ -108,13 +117,29 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
 
     :param data:          Serialized data
     :param py_type:       The Python class to create an instance from
-    :param format:        Serialization format as supported by a **py-adpater** plugin, e.g. ``JSON``.
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
     basic_obj = deserialize_fn(data=data, writer_schema=writer_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
+
+
+def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Iterator[Obj]:
+    """
+    Deserialize bytes as an iterator over Python objects of a given type from a serialization format supported by
+    **py-adapter**
+
+    :param data:          Serialized data
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
+    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
+    basic_objs = deserialize_fn(data=data, writer_schema=writer_schema)
+    objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
+    return objs
 
 
 class _Adapter(abc.ABC):

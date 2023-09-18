@@ -12,6 +12,7 @@
 """
 JSON serializer/deserializer **py-adapter** plugin
 """
+from collections.abc import Iterable, Iterator
 
 import py_adapter
 import py_adapter.plugin
@@ -31,6 +32,19 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
 
 
 @py_adapter.plugin.hook
+def serialize_many(objs: Iterable[py_adapter.Basic], writer_schema: bytes) -> bytes:
+    """
+    Serialize multiple Python objects of basic types as Newline Delimited JSON (NDJSON).
+
+    :param objs:          Python objects to serialize
+    :param writer_schema: Schema to serialize the data with. Not used with JSON serialization.
+    """
+    import orjson
+
+    return b"\n".join(orjson.dumps(obj) for obj in objs)
+
+
+@py_adapter.plugin.hook
 def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize JSON bytes as an object of basic Python types
@@ -41,3 +55,16 @@ def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
     import orjson
 
     return orjson.loads(data)
+
+
+@py_adapter.plugin.hook
+def deserialize_many(data: bytes, writer_schema: bytes) -> Iterator[py_adapter.Basic]:
+    """
+    Deserialize Newline Delimited JSON (NDJSON) data as an iterator over objects of basic Python types
+
+    :param data:          Bytes to deserialize
+    :param writer_schema: Schema used to serialize the data with. Not used with JSON serialization.
+    """
+    import orjson
+
+    return (orjson.loads(line) for line in data.splitlines())
