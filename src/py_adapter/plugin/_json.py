@@ -13,13 +13,14 @@
 JSON serializer/deserializer **py-adapter** plugin
 """
 from collections.abc import Iterable, Iterator
+from typing import BinaryIO
 
 import py_adapter
 import py_adapter.plugin
 
 
 @py_adapter.plugin.hook
-def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
+def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
     """
     Serialize an object of basic Python types as JSON bytes
 
@@ -28,7 +29,10 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
     """
     import orjson
 
-    return orjson.dumps(obj)
+    data = orjson.dumps(obj)
+    stream.write(data)
+    stream.flush()
+    return stream
 
 
 @py_adapter.plugin.hook
@@ -45,7 +49,7 @@ def serialize_many(objs: Iterable[py_adapter.Basic], writer_schema: bytes) -> by
 
 
 @py_adapter.plugin.hook
-def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
+def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize JSON bytes as an object of basic Python types
 
@@ -54,7 +58,7 @@ def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
     """
     import orjson
 
-    return orjson.loads(data)
+    return orjson.loads(stream.read())
 
 
 @py_adapter.plugin.hook

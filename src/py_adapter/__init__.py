@@ -121,10 +121,7 @@ def serialize_to_stream(obj: Any, stream: BinaryIO, *, format: str, writer_schem
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
-    # TODO: serialize hook function should take a stream
-    data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
-    stream.write(data)
-    stream.flush()
+    serialize_fn(obj=basic_obj, stream=stream, writer_schema=writer_schema)
 
 
 def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
@@ -166,8 +163,7 @@ def deserialize_from_stream(stream: BinaryIO, py_type: Type[Obj], *, format: str
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
-    # TODO: deserialize function should take a stream
-    basic_obj = deserialize_fn(data=stream.read(), writer_schema=writer_schema)
+    basic_obj = deserialize_fn(stream=stream, writer_schema=writer_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
 

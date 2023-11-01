@@ -15,6 +15,7 @@ Avro serializer/deserializer **py-adapter** plugin
 
 import io
 from collections.abc import Iterable, Iterator
+from typing import BinaryIO
 
 import orjson
 
@@ -23,7 +24,7 @@ import py_adapter.plugin
 
 
 @py_adapter.plugin.hook
-def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
+def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
     """
     Serialize an object of basic Python types as Avro bytes
 
@@ -32,15 +33,12 @@ def serialize(obj: py_adapter.Basic, writer_schema: bytes) -> bytes:
     """
     import fastavro.write
 
-    data_stream = io.BytesIO()
     # TODO: generate schema if not provided
     schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
     # TODO: add support for writer which embeds the schema
-    fastavro.write.schemaless_writer(data_stream, schema=schema_obj, record=obj)
-    data_stream.flush()
-    data_stream.seek(0)
-    data = data_stream.read()
-    return data
+    fastavro.write.schemaless_writer(stream, schema=schema_obj, record=obj)
+    stream.flush()
+    return stream
 
 
 @py_adapter.plugin.hook
@@ -64,7 +62,7 @@ def serialize_many(objs: Iterable[py_adapter.Basic], writer_schema: bytes) -> by
 
 
 @py_adapter.plugin.hook
-def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
+def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize Avro bytes as an object of basic Python types
 
@@ -75,10 +73,9 @@ def deserialize(data: bytes, writer_schema: bytes) -> py_adapter.Basic:
 
     # TODO: generate writer schema if not provided
     writer_schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
-    data_stream = io.BytesIO(data)
     # TODO: add support for reader schema, if provided
     # TODO: add support for reader of data with embedded (writer) schema
-    basic_obj = fastavro.read.schemaless_reader(data_stream, writer_schema=writer_schema_obj, reader_schema=None)
+    basic_obj = fastavro.read.schemaless_reader(stream, writer_schema=writer_schema_obj, reader_schema=None)
     return basic_obj
 
 

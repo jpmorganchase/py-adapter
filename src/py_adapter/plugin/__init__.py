@@ -17,7 +17,7 @@ import functools
 import logging
 import sys
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 
 import pluggy
 
@@ -102,9 +102,12 @@ class InvalidFormat(ValueError):
 
 
 @_hookspec(firstresult=True)
-def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
+def serialize(obj: "py_adapter.Basic", stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
     """
     Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
+
+    Although we write to the stream, we also return the stream from this function. We need to return something to avoid
+    pluggy thinking the hook is not implemented.
 
     :param obj:           Python object to serialize
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
@@ -125,7 +128,7 @@ def serialize_many(objs: Iterable["py_adapter.Basic"], writer_schema: bytes) -> 
 
 
 @_hookspec(firstresult=True)
-def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
+def deserialize(stream: BinaryIO, writer_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
 
