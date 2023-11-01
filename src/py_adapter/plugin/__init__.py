@@ -137,7 +137,7 @@ def serialize_many(
 
 
 @_hookspec(firstresult=True)
-def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes) -> "py_adapter.Basic":
+def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
 
@@ -149,7 +149,9 @@ def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes) -> "py_ad
 
 
 @_hookspec(firstresult=True)
-def deserialize_many(stream: BinaryIO, py_type: Type, writer_schema: bytes) -> Iterator["py_adapter.Basic"]:
+def deserialize_many(
+    stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes
+) -> Iterator["py_adapter.Basic"]:
     """
     Hook specification. Deserialize data as an iterator over objects of basic Python types
 

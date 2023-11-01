@@ -160,7 +160,9 @@ def serialize_many_to_stream(objs: Iterable[Any], stream: BinaryIO, *, format: s
     serialize_fn(objs=basic_objs, stream=stream, py_type=py_type, writer_schema=writer_schema)
 
 
-def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
+def deserialize(
+    data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"", reader_schema: bytes = b""
+) -> Obj:
     """
     Deserialize bytes as a Python object of a given type from a serialization format supported by **py-adapter**
 
@@ -168,13 +170,19 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     :param py_type:       The Python class to create an instance from
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Data schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     data_stream = io.BytesIO(data)
-    obj = deserialize_from_stream(data_stream, py_type, format=format, writer_schema=writer_schema)
+    obj = deserialize_from_stream(
+        data_stream, py_type, format=format, writer_schema=writer_schema, reader_schema=reader_schema
+    )
     return obj
 
 
-def deserialize_from_stream(stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
+def deserialize_from_stream(
+    stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"", reader_schema: bytes = b""
+) -> Obj:
     """
     Deserialize a file-like object as a Python object of a given type from a serialization format supported by
     **py-adapter**
@@ -183,14 +191,18 @@ def deserialize_from_stream(stream: BinaryIO, py_type: Type[Obj], *, format: str
     :param py_type:       The Python class to create an instance from
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Data schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
-    basic_obj = deserialize_fn(stream=stream, py_type=py_type, writer_schema=writer_schema)
+    basic_obj = deserialize_fn(stream=stream, py_type=py_type, writer_schema=writer_schema, reader_schema=reader_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
 
 
-def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Iterator[Obj]:
+def deserialize_many(
+    data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"", reader_schema: bytes = b""
+) -> Iterator[Obj]:
     """
     Deserialize bytes as an iterator over Python objects of a given type from a serialization format supported by
     **py-adapter**
@@ -199,14 +211,18 @@ def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_sch
     :param py_type:       The Python class to create an instance from
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Data schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     data_stream = io.BytesIO(data)
-    objs = deserialize_many_from_stream(data_stream, py_type, format=format, writer_schema=writer_schema)
+    objs = deserialize_many_from_stream(
+        data_stream, py_type, format=format, writer_schema=writer_schema, reader_schema=reader_schema
+    )
     return objs
 
 
 def deserialize_many_from_stream(
-    stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b""
+    stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"", reader_schema: bytes = b""
 ) -> Iterator[Obj]:
     """
     Deserialize a file-like object as an iterator over Python objects of a given type from a serialization format
@@ -216,9 +232,13 @@ def deserialize_many_from_stream(
     :param py_type:       The Python class to create an instance from
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Data schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
-    basic_objs = deserialize_fn(stream=stream, py_type=py_type, writer_schema=writer_schema)
+    basic_objs = deserialize_fn(
+        stream=stream, py_type=py_type, writer_schema=writer_schema, reader_schema=reader_schema
+    )
     objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
     return objs
 

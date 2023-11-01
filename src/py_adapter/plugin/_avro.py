@@ -62,38 +62,46 @@ def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, py_type: 
 
 
 @py_adapter.plugin.hook
-def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes) -> py_adapter.Basic:
+def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize Avro bytes as an object of basic Python types
 
     :param stream:        File-like object to deserialize
     :param py_type:       Python class the basic object will ultimately be deserialized into
     :param writer_schema: Avro schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Avro schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     import fastavro.read
 
     writer_schema = writer_schema or _default_schema(py_type)
     writer_schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
-    # TODO: add support for reader schema, if provided
+    reader_schema_obj = fastavro.parse_schema(orjson.loads(reader_schema)) if reader_schema else None
     # TODO: add support for reader of data with embedded (writer) schema
-    basic_obj = fastavro.read.schemaless_reader(stream, writer_schema=writer_schema_obj, reader_schema=None)
+    basic_obj = fastavro.read.schemaless_reader(
+        stream, writer_schema=writer_schema_obj, reader_schema=reader_schema_obj
+    )
     return basic_obj
 
 
 @py_adapter.plugin.hook
-def deserialize_many(stream: BinaryIO, py_type: Type, writer_schema: bytes) -> Iterator[py_adapter.Basic]:
+def deserialize_many(
+    stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes
+) -> Iterator[py_adapter.Basic]:
     """
     Deserialize Avro container file format data as an iterator over objects of basic Python types
 
     :param stream:        File-like object to deserialize
     :param py_type:       Python class the basic object will ultimately be deserialized into
-    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    :param writer_schema: Avro schema used to serialize the data with, as JSON bytes.
+    :param reader_schema: Avro schema to deserialize the data with, as JSON bytes. The reader schema should be
+                          compatible with the writer schema.
     """
     import fastavro.read
 
     # TODO: make it fail if writer_schema is provided?
-    # TODO: add support for reader schema, if provided
-    basic_objs = fastavro.read.reader(stream, reader_schema=None)
+    reader_schema_obj = fastavro.parse_schema(orjson.loads(reader_schema)) if reader_schema else None
+    basic_objs = fastavro.read.reader(stream, reader_schema=reader_schema_obj)
     return basic_objs
 
 
