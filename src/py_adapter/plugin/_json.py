@@ -12,6 +12,7 @@
 """
 JSON serializer/deserializer **py-adapter** plugin
 """
+
 from collections.abc import Iterable, Iterator
 from typing import BinaryIO
 
