@@ -24,7 +24,18 @@ import inspect
 import logging
 import uuid
 from collections.abc import Iterable, Iterator
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    BinaryIO,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import avro.schema
 import dateutil.parser
@@ -91,10 +102,28 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
+    # TODO: delegate to _to_stream
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
     data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
     return data
+
+
+def serialize_to_stream(obj: Any, stream: BinaryIO, *, format: str, writer_schema: bytes = b"") -> None:
+    """
+    Serialize an object to a file-like object using a serialization format supported by **py-adapter**
+
+    :param obj:           Python object to serialize
+    :param stream:        File like object to write the serialized data into
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
+    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
+    basic_obj = to_basic_type(obj)
+    # TODO: serialize hook function should take a stream
+    data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
+    stream.write(data)
+    stream.flush()
 
 
 def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
@@ -120,8 +149,26 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
+    # TODO: delegate to _from_stream
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
     basic_obj = deserialize_fn(data=data, writer_schema=writer_schema)
+    obj = from_basic_type(basic_obj, py_type)
+    return obj
+
+
+def deserialize_from_stream(stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
+    """
+    Deserialize a file-like object as a Python object of a given type from a serialization format supported by
+    **py-adapter**
+
+    :param stream:        File-like object to deserialize
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
+    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
+    # TODO: deserialize function should take a stream
+    basic_obj = deserialize_fn(data=stream.read(), writer_schema=writer_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
 

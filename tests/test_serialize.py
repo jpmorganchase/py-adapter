@@ -88,10 +88,11 @@ def test_serialize_stream_json(ship_obj, ship_class):
 
 
 def test_serialize_stream_avro(ship_obj, ship_class):
+    writer_schema = pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS)
     data = io.BytesIO()
-    py_adapter.serialize_to_stream(ship_obj, data, format="Avro")
+    py_adapter.serialize_to_stream(ship_obj, data, format="Avro", writer_schema=writer_schema)
     data.seek(0)
-    obj_out = py_adapter.deserialize_from_stream(data, ship_class, format="Avro")
+    obj_out = py_adapter.deserialize_from_stream(data, ship_class, format="Avro", writer_schema=writer_schema)
     assert obj_out == ship_obj
 
 
