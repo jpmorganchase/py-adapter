@@ -79,7 +79,6 @@ def test_serialize_avro(ship_obj, ship_class):
     assert obj_out == ship_obj
 
 
-@pytest.mark.skip("TODO")
 def test_serialize_stream_json(ship_obj, ship_class):
     data = io.BytesIO()
     py_adapter.serialize_to_stream(ship_obj, data, format="JSON")
@@ -88,7 +87,6 @@ def test_serialize_stream_json(ship_obj, ship_class):
     assert obj_out == ship_obj
 
 
-@pytest.mark.skip("TODO")
 def test_serialize_stream_avro(ship_obj, ship_class):
     data = io.BytesIO()
     py_adapter.serialize_to_stream(ship_obj, data, format="Avro")
