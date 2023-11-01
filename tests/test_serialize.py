@@ -124,6 +124,18 @@ def test_serialize_many_avro_automatic_writer_schema(ship_obj, ship_class):
     assert objs_out == ship_objs
 
 
+def test_serialize_many_avro_automatic_writer_schema_generator(ship_obj, ship_class):
+    ship_objs = [ship_obj, ship_obj]
+
+    def ship_objs_generator():
+        for ship in ship_objs:
+            yield ship
+
+    data = py_adapter.serialize_many(ship_objs_generator(), format="Avro")
+    objs_out = list(py_adapter.deserialize_many(data, ship_class, format="Avro"))
+    assert objs_out == ship_objs
+
+
 def test_serialize_many_stream_json(ship_obj, ship_class):
     ship_objs = [ship_obj, ship_obj]
     data = io.BytesIO()
