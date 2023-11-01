@@ -13,9 +13,11 @@
 Avro serializer/deserializer **py-adapter** plugin
 """
 
+import functools
 from collections.abc import Iterable, Iterator
 from typing import BinaryIO, Type
 
+import fastavro.types
 import orjson
 
 import py_adapter
@@ -35,7 +37,7 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, py_type: Type, writer_sch
     import fastavro.write
 
     writer_schema = writer_schema or _default_schema(py_type)
-    schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
+    schema_obj = _parse_fastavro_schema(writer_schema)
     # TODO: add support for writer which embeds the schema
     fastavro.write.schemaless_writer(stream, schema=schema_obj, record=obj)
     stream.flush()
@@ -55,7 +57,7 @@ def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, py_type: 
     import fastavro.write
 
     writer_schema = writer_schema or _default_schema(py_type)
-    schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
+    schema_obj = _parse_fastavro_schema(writer_schema)
     fastavro.write.writer(stream, schema=schema_obj, records=objs)
     stream.flush()
     return stream
@@ -75,8 +77,8 @@ def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_sc
     import fastavro.read
 
     writer_schema = writer_schema or _default_schema(py_type)
-    writer_schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
-    reader_schema_obj = fastavro.parse_schema(orjson.loads(reader_schema)) if reader_schema else None
+    writer_schema_obj = _parse_fastavro_schema(writer_schema)
+    reader_schema_obj = _parse_fastavro_schema(reader_schema) if reader_schema else None
     # TODO: add support for reader of data with embedded (writer) schema
     basic_obj = fastavro.read.schemaless_reader(
         stream, writer_schema=writer_schema_obj, reader_schema=reader_schema_obj
@@ -100,7 +102,7 @@ def deserialize_many(
     import fastavro.read
 
     # TODO: make it fail if writer_schema is provided?
-    reader_schema_obj = fastavro.parse_schema(orjson.loads(reader_schema)) if reader_schema else None
+    reader_schema_obj = _parse_fastavro_schema(reader_schema) if reader_schema else None
     basic_objs = fastavro.read.reader(stream, reader_schema=reader_schema_obj)
     return basic_objs
 
@@ -112,3 +114,9 @@ def _default_schema(py_type: Type) -> bytes:
     # JSON as string matches default argument in to_basic_type function
     schema = pas.generate(py_type, options=pas.Option.LOGICAL_JSON_STRING)
     return schema
+
+
+@functools.lru_cache(maxsize=100)
+def _parse_fastavro_schema(json_data: bytes) -> fastavro.types.Schema:
+    """Parse an Avro schema (JSON bytes) into a fastavro-internal representation"""
+    return fastavro.parse_schema(orjson.loads(json_data))
