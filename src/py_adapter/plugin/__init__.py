@@ -110,18 +110,23 @@ def serialize(obj: "py_adapter.Basic", stream: BinaryIO, writer_schema: bytes) -
     pluggy thinking the hook is not implemented.
 
     :param obj:           Python object to serialize
+    :param stream:        File-like object to serialize data to
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
 
 
 @_hookspec(firstresult=True)
-def serialize_many(objs: Iterable["py_adapter.Basic"], writer_schema: bytes) -> bytes:
+def serialize_many(objs: Iterable["py_adapter.Basic"], stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
     """
     Hook specification. Serialize multiple Python objects of basic types to the format supported by the implementing
     plugin.
 
+    Although we write to the stream, we also return the stream from this function. We need to return something to avoid
+    pluggy thinking the hook is not implemented.
+
     :param objs:          Python objects to serialize
+    :param stream:        File-like object to serialize data to
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
@@ -132,18 +137,18 @@ def deserialize(stream: BinaryIO, writer_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
 
-    :param data:          Bytes to deserialize
+    :param stream:        File-like object to deserialize
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
 
 
 @_hookspec(firstresult=True)
-def deserialize_many(data: bytes, writer_schema: bytes) -> Iterator["py_adapter.Basic"]:
+def deserialize_many(stream: BinaryIO, writer_schema: bytes) -> Iterator["py_adapter.Basic"]:
     """
     Hook specification. Deserialize data as an iterator over objects of basic Python types
 
-    :param data:          Bytes to deserialize
+    :param stream:        File-like object to deserialize
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()

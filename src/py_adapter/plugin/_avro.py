@@ -13,7 +13,6 @@
 Avro serializer/deserializer **py-adapter** plugin
 """
 
-import io
 from collections.abc import Iterable, Iterator
 from typing import BinaryIO
 
@@ -29,6 +28,7 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> 
     Serialize an object of basic Python types as Avro bytes
 
     :param obj:           Python object to serialize
+    :param stream:        File-like object to serialize data to
     :param writer_schema: Avro schema to serialize the data with, as JSON bytes.
     """
     import fastavro.write
@@ -42,23 +42,21 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> 
 
 
 @py_adapter.plugin.hook
-def serialize_many(objs: Iterable[py_adapter.Basic], writer_schema: bytes) -> bytes:
+def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
     """
     Serialize multiple Python objects of basic types as Avro container file format.
 
     :param objs:          Python objects to serialize
+    :param stream:        File-like object to serialize data to
     :param writer_schema: Avro schema to serialize the data with, as JSON bytes.
     """
     import fastavro.write
 
-    data_stream = io.BytesIO()
     # TODO: generate schema if not provided
     schema_obj = fastavro.parse_schema(orjson.loads(writer_schema))
-    fastavro.write.writer(data_stream, schema=schema_obj, records=objs)
-    data_stream.flush()
-    data_stream.seek(0)
-    data = data_stream.read()
-    return data
+    fastavro.write.writer(stream, schema=schema_obj, records=objs)
+    stream.flush()
+    return stream
 
 
 @py_adapter.plugin.hook
@@ -66,7 +64,7 @@ def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
     """
     Deserialize Avro bytes as an object of basic Python types
 
-    :param data:          Avro bytes to deserialize
+    :param stream:        File-like object to deserialize
     :param writer_schema: Avro schema used to serialize the data with, as JSON bytes.
     """
     import fastavro.read
@@ -80,17 +78,16 @@ def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
 
 
 @py_adapter.plugin.hook
-def deserialize_many(data: bytes, writer_schema: bytes) -> Iterator[py_adapter.Basic]:
+def deserialize_many(stream: BinaryIO, writer_schema: bytes) -> Iterator[py_adapter.Basic]:
     """
     Deserialize Avro container file format data as an iterator over objects of basic Python types
 
-    :param data:          Bytes to deserialize
+    :param stream:        File-like object to deserialize
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     import fastavro.read
 
     # TODO: make it fail if writer_schema is provided?
-    data_stream = io.BytesIO(data)
     # TODO: add support for reader schema, if provided
-    basic_objs = fastavro.read.reader(data_stream, reader_schema=None)
+    basic_objs = fastavro.read.reader(stream, reader_schema=None)
     return basic_objs

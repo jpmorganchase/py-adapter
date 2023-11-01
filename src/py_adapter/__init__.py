@@ -132,9 +132,12 @@ def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
+    data_stream = io.BytesIO()
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
     basic_objs = (to_basic_type(obj) for obj in objs)
-    data = serialize_fn(objs=basic_objs, writer_schema=writer_schema)
+    serialize_fn(objs=basic_objs, stream=data_stream, writer_schema=writer_schema)
+    data_stream.seek(0)
+    data = data_stream.read()
     return data
 
 
@@ -178,8 +181,9 @@ def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_sch
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
+    data_stream = io.BytesIO(data)
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
-    basic_objs = deserialize_fn(data=data, writer_schema=writer_schema)
+    basic_objs = deserialize_fn(stream=data_stream, writer_schema=writer_schema)
     objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
     return objs
 
