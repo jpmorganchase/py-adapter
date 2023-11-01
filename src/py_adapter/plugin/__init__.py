@@ -22,8 +22,6 @@ from typing import TYPE_CHECKING, BinaryIO, Type
 import pluggy
 
 if TYPE_CHECKING:
-    from pluggy._hooks import _HookCaller
-
     import py_adapter
 
 logger = logging.getLogger(__package__)
@@ -66,7 +64,7 @@ def _load_default_plugins(manager_: pluggy.PluginManager) -> None:
         manager_.register(plugin, name=name)
 
 
-def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
+def plugin_hook(plugin_name: str, hook_name: str) -> pluggy.HookCaller:
     """
     Return a hook (caller) for a single named plugin and hook name
 
