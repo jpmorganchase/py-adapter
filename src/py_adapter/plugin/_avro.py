@@ -29,6 +29,8 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, py_type: Type, writer_sch
     """
     Serialize an object of basic Python types as Avro bytes
 
+    This uses a single-record Avro file format which does **not** embed the schema.
+
     :param obj:           Python object to serialize
     :param stream:        File-like object to serialize data to
     :param py_type:       Original Python class associated with the basic object
@@ -38,7 +40,6 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, py_type: Type, writer_sch
 
     writer_schema = writer_schema or _default_schema(py_type)
     schema_obj = _parse_fastavro_schema(writer_schema)
-    # TODO: add support for writer which embeds the schema
     fastavro.write.schemaless_writer(stream, schema=schema_obj, record=obj)
     stream.flush()
     return stream
@@ -47,7 +48,9 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, py_type: Type, writer_sch
 @py_adapter.plugin.hook
 def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, py_type: Type, writer_schema: bytes) -> BinaryIO:
     """
-    Serialize multiple Python objects of basic types as Avro container file format.
+    Serialize multiple Python objects of basic types as Avro container file format
+
+    The Avro schema will be included in the header of the file.
 
     :param objs:          Python objects to serialize
     :param stream:        File-like object to serialize data to
@@ -79,7 +82,6 @@ def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_sc
     writer_schema = writer_schema or _default_schema(py_type)
     writer_schema_obj = _parse_fastavro_schema(writer_schema)
     reader_schema_obj = _parse_fastavro_schema(reader_schema) if reader_schema else None
-    # TODO: add support for reader of data with embedded (writer) schema
     basic_obj = fastavro.read.schemaless_reader(
         stream, writer_schema=writer_schema_obj, reader_schema=reader_schema_obj
     )
