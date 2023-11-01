@@ -53,10 +53,11 @@ def manager() -> pluggy.PluginManager:
 
 def _load_default_plugins(manager_: pluggy.PluginManager) -> None:
     """Load plugins that are packaged with py-adapter"""
-    from py_adapter.plugin import _avro, _json
+    from py_adapter.plugin import _avro, _csv, _json
 
     default_plugins = {
         "Avro": _avro,
+        "CSV": _csv,
         "JSON": _json,
     }
     for name, plugin in default_plugins.items():
