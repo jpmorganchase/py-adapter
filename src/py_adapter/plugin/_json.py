@@ -20,13 +20,12 @@ import py_adapter.plugin
 
 
 @py_adapter.plugin.hook
-def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
+def serialize(obj: py_adapter.Basic, stream: BinaryIO) -> BinaryIO:
     """
     Serialize an object of basic Python types as JSON bytes
 
-    :param obj:           Python object to serialize
-    :param stream:        File-like object to serialize data to
-    :param writer_schema: Schema to serialize the data with. Not used with JSON serialization.
+    :param obj:    Python object to serialize
+    :param stream: File-like object to serialize data to
     """
     import orjson
 
@@ -37,13 +36,12 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO, writer_schema: bytes) -> 
 
 
 @py_adapter.plugin.hook
-def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, writer_schema: bytes) -> BinaryIO:
+def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO) -> BinaryIO:
     """
     Serialize multiple Python objects of basic types as Newline Delimited JSON (NDJSON).
 
-    :param objs:          Python objects to serialize
-    :param stream:        File-like object to serialize data to
-    :param writer_schema: Schema to serialize the data with. Not used with JSON serialization.
+    :param objs:   Python objects to serialize
+    :param stream: File-like object to serialize data to
     """
     import orjson
 
@@ -54,12 +52,11 @@ def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO, writer_sc
 
 
 @py_adapter.plugin.hook
-def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
+def deserialize(stream: BinaryIO) -> py_adapter.Basic:
     """
     Deserialize JSON bytes as an object of basic Python types
 
-    :param stream:        File-like object to deserialize
-    :param writer_schema: Schema used to serialize the data with. Not used with JSON serialization.
+    :param stream: File-like object to deserialize
     """
     import orjson
 
@@ -67,12 +64,11 @@ def deserialize(stream: BinaryIO, writer_schema: bytes) -> py_adapter.Basic:
 
 
 @py_adapter.plugin.hook
-def deserialize_many(stream: BinaryIO, writer_schema: bytes) -> Iterator[py_adapter.Basic]:
+def deserialize_many(stream: BinaryIO) -> Iterator[py_adapter.Basic]:
     """
     Deserialize Newline Delimited JSON (NDJSON) data as an iterator over objects of basic Python types
 
-    :param stream:        File-like object to deserialize
-    :param writer_schema: Schema used to serialize the data with. Not used with JSON serialization.
+    :param stream: File-like object to deserialize
     """
     import orjson
 
