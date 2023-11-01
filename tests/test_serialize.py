@@ -111,19 +111,22 @@ def test_serialize_many_avro(ship_obj, ship_class):
     assert objs_out == ship_objs
 
 
-@pytest.mark.skip("TODO")
 def test_serialize_many_stream_json(ship_obj, ship_class):
     ship_objs = [ship_obj, ship_obj]
     data = io.BytesIO()
     py_adapter.serialize_many_to_stream(ship_objs, data, format="JSON")
+    data.seek(0)
     objs_out = list(py_adapter.deserialize_many_from_stream(data, ship_class, format="JSON"))
     assert objs_out == ship_objs
 
 
-@pytest.mark.skip("TODO")
 def test_serialize_many_stream_avro(ship_obj, ship_class):
+    writer_schema = pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS)
     ship_objs = [ship_obj, ship_obj]
     data = io.BytesIO()
-    py_adapter.serialize_many_to_stream(ship_objs, data, format="Avro")
-    objs_out = list(py_adapter.deserialize_many_from_stream(data, ship_class, format="Avro"))
+    py_adapter.serialize_many_to_stream(ship_objs, data, format="Avro", writer_schema=writer_schema)
+    data.seek(0)
+    objs_out = list(
+        py_adapter.deserialize_many_from_stream(data, ship_class, format="Avro", writer_schema=writer_schema)
+    )
     assert objs_out == ship_objs

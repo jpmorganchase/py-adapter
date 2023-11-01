@@ -133,12 +133,24 @@ def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     data_stream = io.BytesIO()
-    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
-    basic_objs = (to_basic_type(obj) for obj in objs)
-    serialize_fn(objs=basic_objs, stream=data_stream, writer_schema=writer_schema)
+    serialize_many_to_stream(objs, data_stream, format=format, writer_schema=writer_schema)
     data_stream.seek(0)
     data = data_stream.read()
     return data
+
+
+def serialize_many_to_stream(objs: Iterable[Any], stream: BinaryIO, *, format: str, writer_schema: bytes = b"") -> None:
+    """
+    Serialize multiple objects to a file-like object using a serialization format supported by **py-adapter**
+
+    :param objs:          Python objects to serialize
+    :param stream:        File like object to write the serialized data into
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema to serialize the data with, as JSON bytes.
+    """
+    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
+    basic_objs = (to_basic_type(obj) for obj in objs)
+    serialize_fn(objs=basic_objs, stream=stream, writer_schema=writer_schema)
 
 
 def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
@@ -182,8 +194,24 @@ def deserialize_many(data: bytes, py_type: Type[Obj], *, format: str, writer_sch
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     data_stream = io.BytesIO(data)
+    objs = deserialize_many_from_stream(data_stream, py_type, format=format, writer_schema=writer_schema)
+    return objs
+
+
+def deserialize_many_from_stream(
+    stream: BinaryIO, py_type: Type[Obj], *, format: str, writer_schema: bytes = b""
+) -> Iterator[Obj]:
+    """
+    Deserialize a file-like object as an iterator over Python objects of a given type from a serialization format
+    supported by **py-adapter**
+
+    :param stream:        File-like object to deserialize
+    :param py_type:       The Python class to create an instance from
+    :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
+    :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
+    """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
-    basic_objs = deserialize_fn(stream=data_stream, writer_schema=writer_schema)
+    basic_objs = deserialize_fn(stream=stream, writer_schema=writer_schema)
     objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
     return objs
 
