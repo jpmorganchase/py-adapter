@@ -39,3 +39,18 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO) -> BinaryIO:
     stream.write(text_stream.read().encode("utf-8"))
     stream.flush()
     return stream
+
+
+@py_adapter.plugin.hook
+def deserialize(stream: BinaryIO) -> py_adapter.Basic:
+    """
+    Deserialize CSV data as an object of basic Python types
+
+    :param stream: File-like object to deserialize
+    """
+    import csv
+
+    text_stream = io.StringIO(stream.read().decode("utf-8"))
+    csv_reader = csv.DictReader(text_stream)
+    obj = next(csv_reader)
+    return obj

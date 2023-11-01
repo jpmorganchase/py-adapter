@@ -40,3 +40,5 @@ def test_serialize_1_record(simple_ship):
     data = py_adapter.serialize(simple_ship, format="CSV")
     expected_lines = [b"name,build_on", b"Elvira,1970-12-31"]
     assert data.splitlines() == expected_lines
+    obj_out = py_adapter.deserialize(data, SimpleShip, format="CSV")
+    assert obj_out == simple_ship
