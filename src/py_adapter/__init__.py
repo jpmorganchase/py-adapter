@@ -21,6 +21,7 @@ import enum
 import importlib
 import importlib.metadata
 import inspect
+import io
 import logging
 import uuid
 from collections.abc import Iterable, Iterator
@@ -102,10 +103,10 @@ def serialize(obj: Any, *, format: str, writer_schema: bytes = b"") -> bytes:
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
-    # TODO: delegate to _to_stream
-    serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
-    basic_obj = to_basic_type(obj)
-    data = serialize_fn(obj=basic_obj, writer_schema=writer_schema)
+    data_stream = io.BytesIO()
+    serialize_to_stream(obj, data_stream, format=format, writer_schema=writer_schema)
+    data_stream.seek(0)
+    data = data_stream.read()
     return data
 
 
@@ -149,10 +150,8 @@ def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: 
     :param format:        Serialization format as supported by a **py-adapter** plugin, e.g. ``JSON``.
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
-    # TODO: delegate to _from_stream
-    deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
-    basic_obj = deserialize_fn(data=data, writer_schema=writer_schema)
-    obj = from_basic_type(basic_obj, py_type)
+    data_stream = io.BytesIO(data)
+    obj = deserialize_from_stream(data_stream, py_type, format=format, writer_schema=writer_schema)
     return obj
 
 
