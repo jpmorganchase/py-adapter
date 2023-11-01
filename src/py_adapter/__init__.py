@@ -121,7 +121,8 @@ def serialize_to_stream(obj: Any, stream: BinaryIO, *, format: str, writer_schem
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize")
     basic_obj = to_basic_type(obj)
-    serialize_fn(obj=basic_obj, stream=stream, writer_schema=writer_schema)
+    py_type = type(obj)
+    serialize_fn(obj=basic_obj, stream=stream, py_type=py_type, writer_schema=writer_schema)
 
 
 def serialize_many(objs: Iterable[Any], *, format: str, writer_schema: bytes = b"") -> bytes:
@@ -150,7 +151,9 @@ def serialize_many_to_stream(objs: Iterable[Any], stream: BinaryIO, *, format: s
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
     basic_objs = (to_basic_type(obj) for obj in objs)
-    serialize_fn(objs=basic_objs, stream=stream, writer_schema=writer_schema)
+    # Use the first object to find the class, assuming all objects share the same type
+    py_type = type(next(iter(objs)))  # TODO: check this works with a generator
+    serialize_fn(objs=basic_objs, stream=stream, py_type=py_type, writer_schema=writer_schema)
 
 
 def deserialize(data: bytes, py_type: Type[Obj], *, format: str, writer_schema: bytes = b"") -> Obj:
@@ -178,7 +181,7 @@ def deserialize_from_stream(stream: BinaryIO, py_type: Type[Obj], *, format: str
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize")
-    basic_obj = deserialize_fn(stream=stream, writer_schema=writer_schema)
+    basic_obj = deserialize_fn(stream=stream, py_type=py_type, writer_schema=writer_schema)
     obj = from_basic_type(basic_obj, py_type)
     return obj
 
@@ -211,7 +214,7 @@ def deserialize_many_from_stream(
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     deserialize_fn = py_adapter.plugin.plugin_hook(format, "deserialize_many")
-    basic_objs = deserialize_fn(stream=stream, writer_schema=writer_schema)
+    basic_objs = deserialize_fn(stream=stream, py_type=py_type, writer_schema=writer_schema)
     objs = (from_basic_type(basic_obj, py_type) for basic_obj in basic_objs)
     return objs
 

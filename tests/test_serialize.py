@@ -79,6 +79,12 @@ def test_serialize_avro(ship_obj, ship_class):
     assert obj_out == ship_obj
 
 
+def test_serialize_avro_automatic_writer_schema(ship_obj, ship_class):
+    data = py_adapter.serialize(ship_obj, format="Avro")
+    obj_out = py_adapter.deserialize(data, ship_class, format="Avro")
+    assert obj_out == ship_obj
+
+
 def test_serialize_stream_json(ship_obj, ship_class):
     data = io.BytesIO()
     py_adapter.serialize_to_stream(ship_obj, data, format="JSON")
@@ -107,6 +113,13 @@ def test_serialize_many_avro(ship_obj, ship_class):
     writer_schema = pas.generate(ship_class, options=pas.Option.LOGICAL_JSON_STRING | pas.Option.MILLISECONDS)
     ship_objs = [ship_obj, ship_obj]
     data = py_adapter.serialize_many(ship_objs, format="Avro", writer_schema=writer_schema)
+    objs_out = list(py_adapter.deserialize_many(data, ship_class, format="Avro"))
+    assert objs_out == ship_objs
+
+
+def test_serialize_many_avro_automatic_writer_schema(ship_obj, ship_class):
+    ship_objs = [ship_obj, ship_obj]
+    data = py_adapter.serialize_many(ship_objs, format="Avro")
     objs_out = list(py_adapter.deserialize_many(data, ship_class, format="Avro"))
     assert objs_out == ship_objs
 
