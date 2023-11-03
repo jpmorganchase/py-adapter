@@ -22,7 +22,6 @@ import importlib
 import importlib.metadata
 import inspect
 import io
-import itertools
 import logging
 import uuid
 from collections.abc import Iterable, Iterator
@@ -42,6 +41,7 @@ from typing import (
 import avro.schema
 import dateutil.parser
 import memoization
+import more_itertools
 import orjson
 import py_avro_schema as pas
 
@@ -151,12 +151,10 @@ def serialize_many_to_stream(objs: Iterable[Any], stream: BinaryIO, *, format: s
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     serialize_fn = py_adapter.plugin.plugin_hook(format, "serialize_many")
-    objs_iter = iter(objs)
     # Use the first object to find the class, assuming all objects share the same type
-    first_obj = next(objs_iter)
+    (first_obj,), objs = more_itertools.spy(objs)  # This will fail if the iterable is empty
     py_type = type(first_obj)
-    # Then iterate over all objects again to convert to basic types
-    basic_objs = (to_basic_type(obj) for obj in itertools.chain([first_obj], objs_iter))
+    basic_objs = (to_basic_type(obj) for obj in objs)
     serialize_fn(objs=basic_objs, stream=stream, py_type=py_type, writer_schema=writer_schema)
 
 
