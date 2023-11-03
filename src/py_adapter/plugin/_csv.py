@@ -55,7 +55,7 @@ def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO) -> Binary
     import csv
 
     text_stream = io.StringIO(newline="")  # csv modules writes as text
-    (first_obj,), objs = more_itertools.spy(objs)
+    (first_obj,), objs = more_itertools.spy(objs)  # this fails if the iterable is empty
     csv_writer = csv.DictWriter(text_stream, fieldnames=first_obj.keys())
     csv_writer.writeheader()
     csv_writer.writerows(objs)

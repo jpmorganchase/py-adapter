@@ -51,3 +51,13 @@ def test_serialize_many_records(simple_ship):
     assert data.splitlines() == expected_lines
     objs_out = list(py_adapter.deserialize_many(data, SimpleShip, format="CSV"))
     assert objs_out == objs_in
+
+
+@pytest.mark.xfail(reason="Not supported")
+def test_serialize_many_no_records():
+    objs_in = []
+    data = py_adapter.serialize_many(objs_in, format="CSV")
+    expected_lines = [b"name,build_on"]
+    assert data.splitlines() == expected_lines
+    objs_out = list(py_adapter.deserialize_many(data, SimpleShip, format="CSV"))
+    assert objs_out == objs_in
