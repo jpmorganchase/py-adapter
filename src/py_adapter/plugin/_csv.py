@@ -29,18 +29,7 @@ def serialize(obj: py_adapter.Basic, stream: BinaryIO) -> BinaryIO:
     :param obj:    Python object to serialize
     :param stream: File-like object to serialize data to
     """
-    import csv
-
-    assert isinstance(obj, dict), "CSV serializer supports 'record' types only."
-    text_stream = io.StringIO(newline="")  # csv modules writes as text
-    csv_writer = csv.DictWriter(text_stream, fieldnames=obj.keys())
-    csv_writer.writeheader()
-    csv_writer.writerow(obj)
-    text_stream.flush()
-    text_stream.seek(0)
-
-    stream.write(text_stream.read().encode("utf-8"))
-    stream.flush()
+    serialize_many([obj], stream)
     return stream
 
 
