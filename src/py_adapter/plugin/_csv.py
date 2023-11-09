@@ -64,11 +64,7 @@ def deserialize(stream: BinaryIO) -> py_adapter.Basic:
 
     :param stream: File-like object to deserialize
     """
-    import csv
-
-    text_stream = io.StringIO(stream.read().decode("utf-8"))
-    csv_reader = csv.DictReader(text_stream)
-    obj = next(csv_reader)
+    obj = next(deserialize_many(stream))
     return obj
 
 
