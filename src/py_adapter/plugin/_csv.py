@@ -56,9 +56,10 @@ def serialize_many(objs: Iterable[py_adapter.Basic], stream: BinaryIO) -> Binary
 
     text_stream = io.StringIO(newline="")  # csv modules writes as text
     (first_obj,), objs = more_itertools.spy(objs)  # this fails if the iterable is empty
+    assert isinstance(first_obj, dict), "CSV serializer supports 'record' types only."
     csv_writer = csv.DictWriter(text_stream, fieldnames=first_obj.keys())
     csv_writer.writeheader()
-    csv_writer.writerows(objs)
+    csv_writer.writerows(objs)  # type:ignore[arg-type]  #  We know it's a dict
     text_stream.flush()
     text_stream.seek(0)
 
