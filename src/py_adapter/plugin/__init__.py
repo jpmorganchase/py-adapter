@@ -17,13 +17,11 @@ import functools
 import logging
 import sys
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO, Type
 
 import pluggy
 
 if TYPE_CHECKING:
-    from pluggy._hooks import _HookCaller
-
     import py_adapter
 
 logger = logging.getLogger(__package__)
@@ -66,7 +64,7 @@ def _load_default_plugins(manager_: pluggy.PluginManager) -> None:
         manager_.register(plugin, name=name)
 
 
-def plugin_hook(plugin_name: str, hook_name: str) -> "_HookCaller":
+def plugin_hook(plugin_name: str, hook_name: str) -> pluggy.HookCaller:
     """
     Return a hook (caller) for a single named plugin and hook name
 
@@ -102,45 +100,61 @@ class InvalidFormat(ValueError):
 
 
 @_hookspec(firstresult=True)
-def serialize(obj: "py_adapter.Basic", writer_schema: bytes) -> bytes:
+def serialize(obj: "py_adapter.Basic", stream: BinaryIO, py_type: Type, writer_schema: bytes) -> BinaryIO:
     """
     Hook specification. Serialize a Python object of basic types to the format supported by the implementing plugin.
 
+    Although we write to the stream, we also return the stream from this function. We need to return something to avoid
+    pluggy thinking the hook is not implemented.
+
     :param obj:           Python object to serialize
+    :param stream:        File-like object to serialize data to
+    :param py_type:       Original Python class associated with the basic object
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
 
 
 @_hookspec(firstresult=True)
-def serialize_many(objs: Iterable["py_adapter.Basic"], writer_schema: bytes) -> bytes:
+def serialize_many(
+    objs: Iterable["py_adapter.Basic"], stream: BinaryIO, py_type: Type, writer_schema: bytes
+) -> BinaryIO:
     """
     Hook specification. Serialize multiple Python objects of basic types to the format supported by the implementing
     plugin.
 
+    Although we write to the stream, we also return the stream from this function. We need to return something to avoid
+    pluggy thinking the hook is not implemented.
+
     :param objs:          Python objects to serialize
+    :param stream:        File-like object to serialize data to
+    :param py_type:       Original Python class associated with the basic object
     :param writer_schema: Data schema to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
 
 
 @_hookspec(firstresult=True)
-def deserialize(data: bytes, writer_schema: bytes) -> "py_adapter.Basic":
+def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes) -> "py_adapter.Basic":
     """
     Hook specification. Deserialize data as an object of basic Python types
 
-    :param data:          Bytes to deserialize
+    :param stream:        File-like object to deserialize
+    :param py_type:       Python class the basic object will ultimately be deserialized into
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()
 
 
 @_hookspec(firstresult=True)
-def deserialize_many(data: bytes, writer_schema: bytes) -> Iterator["py_adapter.Basic"]:
+def deserialize_many(
+    stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_schema: bytes
+) -> Iterator["py_adapter.Basic"]:
     """
     Hook specification. Deserialize data as an iterator over objects of basic Python types
 
-    :param data:          Bytes to deserialize
+    :param stream:        File-like object to deserialize
+    :param py_type:       Python class the basic object will ultimately be deserialized into
     :param writer_schema: Data schema used to serialize the data with, as JSON bytes.
     """
     raise NotImplementedError()

@@ -48,7 +48,7 @@ dependencies = [
     "fastavro~=1.8",  # TODO: consider moving Avro-related dependencies to optional dependencies
     "memoization~=0.4",
     "orjson~=3.0",
-    "pluggy~=1.2",
+    "pluggy~=1.3",
     "py-avro-schema~=3.0",
     "python-dateutil~=2.8",
 ]
