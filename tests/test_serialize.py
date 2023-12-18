@@ -25,7 +25,7 @@ def test_invalid_format(ship_obj):
         py_adapter.plugin.InvalidFormat,
         match=re.escape(
             "A plugin for serialization format 'does not exist' is not available. Installed plugins/formats are: "
-            "['Avro', 'JSON']."
+            "['Avro', 'CSV', 'JSON']."
         ),
     ):
         py_adapter.serialize(ship_obj, format="does not exist")
