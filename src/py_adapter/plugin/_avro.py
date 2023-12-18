@@ -85,7 +85,7 @@ def deserialize(stream: BinaryIO, py_type: Type, writer_schema: bytes, reader_sc
     basic_obj = fastavro.read.schemaless_reader(
         stream, writer_schema=writer_schema_obj, reader_schema=reader_schema_obj
     )
-    return basic_obj
+    return basic_obj  # type: ignore[return-value]
 
 
 @py_adapter.plugin.hook
@@ -106,7 +106,7 @@ def deserialize_many(
     # TODO: make it fail if writer_schema is provided?
     reader_schema_obj = _parse_fastavro_schema(reader_schema) if reader_schema else None
     basic_objs = fastavro.read.reader(stream, reader_schema=reader_schema_obj)
-    return basic_objs
+    return basic_objs  # type: ignore[return-value]
 
 
 def _default_schema(py_type: Type) -> bytes:
