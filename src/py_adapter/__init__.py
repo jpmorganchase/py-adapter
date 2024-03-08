@@ -457,7 +457,7 @@ class _ObjectAdapter(_Adapter):
         if isinstance(data, int):
             # Assume we have serialized as a timestamp in milliseconds. Now that is NOT how we would have serialized it
             # if it was Avro. So this is useful only in combination with serializing using ``datetime_type=int``.
-            return datetime.date.fromtimestamp(data / 1e3)
+            return datetime.datetime.fromtimestamp(data / 1e3, tz=datetime.timezone.utc).date()
         elif isinstance(data, str):
             return dateutil.parser.isoparse(data).date()
         else:
